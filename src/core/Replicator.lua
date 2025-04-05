@@ -9,10 +9,6 @@ local Players = game:GetService("Players")
 
 	For example, if Players.CharacterAutoLoads is set to false,
 	GUIs from StarterGui are not replicated for some reason.
-
-	```lua
-
-	```
 ]=]
 local Replicator = {}
 
