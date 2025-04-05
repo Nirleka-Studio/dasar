@@ -5,10 +5,9 @@
 --[=[
 	@class CameraSocket
 
-	A camera socket is a predefined point in space with attirbutes like CFrames and FieldofView.
+	A camera socket is a predefined point in space with attirbutes like CFrames and FieldOfView.
 	Used to facilitate camera transitions.
 ]=]
-
 local CameraSocket = {}
 CameraSocket.__index = CameraSocket
 

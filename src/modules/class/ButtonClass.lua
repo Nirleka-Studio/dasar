@@ -2,18 +2,18 @@
 -- NirlekaDev
 -- January 5, 2025
 
---[=[
-	@class ButtonClass
-
-	A simple class for a button that uses Input.
-]=]
-
 local require = require(game:GetService("ReplicatedStorage").Modules.Dasar).Require
 
 local Input = require("Input")
 local Maid = require("Maid")
 local Signal = require("Signal")
 
+
+--[=[
+	@class ButtonClass
+
+	A simple class for a button that uses Input.
+]=]
 local ButtonClass = {}
 ButtonClass.__index = ButtonClass
 
