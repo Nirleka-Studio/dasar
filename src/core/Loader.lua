@@ -67,6 +67,7 @@ end
 	Loader.LoadDescendants(ReplicatedStorage.MyModules, function(moduleScript)
 		return moduleScript.Name:match("Service$") ~= nil
 	end)
+	```
 ]=]
 function Loader.LoadDescendants(parent: Instance, predicate: PredicateFn?): { [string]: any }
 	local modules: { [string]: any } = {}
@@ -129,6 +130,32 @@ function Loader.SpawnAll(loadedModules: { [string]: any }, methodName: string)
 			end)
 		end
 	end
+end
+
+--[=[
+	Similar to `Loader.SpawnAll()`, connects a function of all given modules
+	to a given connection, then returns a table of the connections.
+
+	```lua
+	local RunService = game:GetService("RunService")
+	local MyModules = ReplicatedStorage.MyModules
+
+	-- Load all modules under MyModules and then connect their "Hearbeat" function
+	-- to RunService.Heartbeat
+	Loader.SpawnAll(Loader.LoadDescendants(MyModules), "Hearbeat", RunService.Heartbeat)
+	```
+]=]
+function Loader.BindAll(loadedModules: { [string]: any }, methodName: string, connection: RBXScriptSignal)
+	local connections = {}
+
+	for name, mod in loadedModules do
+		local method = mod[methodName]
+		if type(method) == "function" then
+			connections[ #connections + 1 ] = connection:Connect(method)
+		end
+	end
+
+	return connections
 end
 
 return Loader
