@@ -9,7 +9,6 @@
 	with additional methods.
 	Lacks type and error handling for performance purposes.
 ]=]
-
 local CharMap = {}
 CharMap.__index = CharMap
 
@@ -113,7 +112,7 @@ end
 function CharMap:CompareRight(right)
 	if type(right) == "string" then
 		return self._string < right
-	elseif type(right) == "table" and self:IsCharMap(right) then
+	elseif type(right) == "table" and CharMap.IsCharMap(right) then
 		return self._string < right._string
 	end
 
@@ -127,7 +126,7 @@ end
 function CharMap:CompareEqualRight(right)
 	if type(right) == "string" then
 		return self._string <= right
-	elseif type(right) == "table" and self:IsCharMap(right) then
+	elseif type(right) == "table" and CharMap.IsCharMap(right) then
 		return self._string <= right._string
 	end
 
@@ -142,7 +141,7 @@ end
 function CharMap:Concat(value)
 	if type(value) == "string" then
 		return self._string .. value
-	elseif type(value) == "table" and self:IsCharMap(value) then
+	elseif type(value) == "table" and CharMap.IsCharMap(value) then
 		return CharMap.new(self._string .. value._string)
 	end
 
