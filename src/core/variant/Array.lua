@@ -2,26 +2,37 @@
 -- NirlekaDev
 -- February 14, 2025
 
---[=[
-	@class Array
-
-	Basically a table with advanced table functions.
-	Based on Godot's Array datatype.
-]=]
-
-local require = require(game:GetService("ReplicatedStorage").Modules.Dasar).Require
-local ErrorMacros = require("error_macros")
-local MurmurHash3 = require("hash_murmur3")
+local MurmurHash3 = require("../hash/hash_murmur3")
 
 local hash_murmur3_one_32 = MurmurHash3.one_32
 local hash_fmix32 = MurmurHash3.fmix32
 
-local ERR_THROW = ErrorMacros.ERR_THROW
 local MAX_RECURSION = 15
 
+local table = table
 local type = type
 local getmetatable = getmetatable
+local string = string
 
+local function neg_index(index, arr)
+	local len = #arr
+
+	if index < 0 then
+		index = len + index + 1
+	end
+
+	if index < 1 or index > len then
+		return nil
+	end
+
+	return index
+end
+
+--[=[
+	@class Array
+
+	--LEFT BLANK, PLEASE FILL IN
+]=]
 local Array = {}
 Array.__index = Array
 
@@ -34,7 +45,9 @@ setmetatable(Array, {
 function Array.new()
 	return setmetatable({
 		_data = {},
-		_readonly = false
+		_readonly = false,
+		_hash_cache = nil,
+		_hash_need_update = true
 	}, Array)
 end
 
@@ -51,33 +64,33 @@ end
 
 function Array:__newindex(index, newValue)
 	if self._readonly then
-		ERR_THROW("Cannot modify a readonly Array!")
+		error("Cannot modify a readonly Array!", 4)
 	end
 
 	if type(index) ~= "number" then
-		ERR_THROW("Attempt to Array[x] = y; 'x' is not a number!")
+		error(string.format("Cannot index Array with type %s!", typeof(index)), 4)
 	end
 
-	if index < 0 or index > self:Size() then
-		ERR_THROW("Attempt to Array[x] = y; 'x' is negative or out of range!")
+	if index > self:Size() then
+		error("Index is out of bounds!", 4)
 	end
 
 	self._data[index] = newValue
 end
 
 function Array:__iter()
-	return pairs(self._data)
+	return ipairs(self._data)
 end
 
 function Array:__len()
 	return self:Size()
 end
 
-function Array:isArray(value)
+function Array.isArray(value)
 	return type(value) == "table" and getmetatable(value) == Array
 end
 
-function Array:recursive_hash(recursion_count)
+function Array:_recursive_hash(recursion_count)
 	if recursion_count > MAX_RECURSION then
 		ERR_THROW("Max recursion reached!")
 	end
@@ -96,8 +109,22 @@ function Array:recursive_hash(recursion_count)
 	return hash_fmix32(h)
 end
 
+function Array:_parse_changes()
+	if self._readonly then
+		error("Cannot modify a readonly Array!", 4)
+	end
+
+	self._hash_need_update = true
+end
+
 function Array:Clear()
+	self:_parse_changes()
+
 	table.clear(self._data)
+end
+
+function Array:Back()
+	return self._data[#self._data]
 end
 
 function Array:Duplicate(deep: boolean, copies)
@@ -137,6 +164,7 @@ function Array:Duplicate(deep: boolean, copies)
 end
 
 function Array:Erase(value: any)
+	self:_parse_changes()
 	local _, index = self:Has(value)
 	if not index then
 		return
@@ -149,29 +177,49 @@ function Array:Front()
 	return self._data[1]
 end
 
+function Array:Find(value, from)
+	from = from or 1
+
+	if self:IsEmpty() or from > self:Size() then
+		return nil
+	end
+
+	for i = from, self:Size() do
+		if self._data[i] == value then
+			return i
+		end
+	end
+
+	return nil
+end
+
 function Array:Get(index: number)
 	return self._data[index]
 end
 
 function Array:Has(value: any)
-	if self:Size() <= 0 then
+	if self:IsEmpty() then
 		return false
 	end
 
-	for i, v in ipairs(self._data) do
-		if v == value then
-			return true, i
-		end
-	end
-
-	return false
+	return self:Find(value) ~= nil
 end
 
 function Array:Hash()
-	return self:recursive_hash(0)
+	if self._hash_need_update then
+		local new_hash = self:recursive_hash(0)
+		self._hash_cache = new_hash
+		self._hash_need_update = false
+
+		return new_hash
+	else
+		return self._hash_cache
+	end
 end
 
 function Array:Insert(index: number, value: any)
+	self:_parse_changes()
+
 	if index then
 		return table.insert(self._data, index, value)
 	else
@@ -180,11 +228,20 @@ function Array:Insert(index: number, value: any)
 end
 
 function Array:IsReadOnly()
-	return self._readonly
+	return self._readonly == true
 end
 
 function Array:IsEmpty()
-	return self:Size() <= 0
+	return next(self._data) == nil
+end
+
+function Array:Set(index: number, value: any)
+	self:_parse_changes()
+	if not self._data[index] then
+		return
+	end
+
+	self._data[index] = value
 end
 
 function Array:Size()
@@ -199,7 +256,26 @@ function Array:PickRandom()
 	return self._data[math.random(1, self:Size())]
 end
 
+function Array:PushBack(value: any)
+	self:_parse_changes()
+
+	self._data[ #self._data + 1 ] = value
+end
+
+function Array:PushFront(value: any)
+	self:_parse_changes()
+	local data = self._data
+
+	for i = #data, 1, -1 do
+		data[i + 1] = data[i]
+	end
+
+	data[1] = value
+end
+
 function Array:Remove(index: number)
+	self:_parse_changes()
+
 	table.remove(self._data, index)
 end
 
