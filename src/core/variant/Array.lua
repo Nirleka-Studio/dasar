@@ -42,8 +42,8 @@ local Array = {}
 Array.__index = Array
 
 setmetatable(Array, {
-	__call = function()
-		return Array.new()
+	__call = function(_, ...)
+		return Array._new(...)
 	end
 })
 
@@ -56,11 +56,17 @@ function Array.new()
 	}, Array)
 end
 
+function Array._new(value)
+	if type(value) == "table" then
+		return Array.fromTable(value)
+	end
+end
+
 function Array.fromTable(from: { [number]: any })
 	local newArray = Array.new()
 
-	for i, v in ipairs(from) do
-		newArray._data[i] = v
+	for _, v in ipairs(from) do
+		newArray:PushBack(v)
 	end
 
 	return newArray
