@@ -16,7 +16,7 @@ local setmetatable = setmetatable
 local table = table
 
 local function neg_index(index, arr)
-	if not type(index) == "number" then
+	if type(index) ~= "number" then
 		return index
 	end
 
@@ -51,7 +51,7 @@ function Array.new()
 	return setmetatable({
 		_data = {},
 		_readonly = false,
-		_hash_cache = nil,
+		_hash_cache = 0,
 		_hash_need_update = true
 	}, Array)
 end
@@ -79,6 +79,12 @@ end
 function Array:__newindex(index, newValue)
 	if self._readonly then
 		error("Cannot modify a readonly Array!", 4)
+	end
+
+	if Array[index] then
+		rawset(self, index, newValue)
+
+		return
 	end
 
 	index = neg_index(index, self._data)
@@ -230,7 +236,7 @@ end
 
 function Array:Hash()
 	if self._hash_need_update then
-		local new_hash = self:recursive_hash(0)
+		local new_hash = self:_recursive_hash(0)
 		self._hash_cache = new_hash
 		self._hash_need_update = false
 
