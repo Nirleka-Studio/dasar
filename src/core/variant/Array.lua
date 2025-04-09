@@ -87,13 +87,13 @@ function Array:__index(index)
 	end
 end
 
-function Array:__newindex(index, newValue)
+function Array:__newindex(index, new_value)
 	if self._readonly then
 		error("Cannot modify a readonly Array!", 4)
 	end
 
 	if Array[index] then
-		rawset(self, index, newValue)
+		rawset(self, index, new_value)
 
 		return
 	end
@@ -108,7 +108,12 @@ function Array:__newindex(index, newValue)
 		error("Index is out of bounds!", 4)
 	end
 
-	self._data[index] = newValue
+	if type(new_value) == "nil" then
+		self:Remove(index)
+		return
+	end
+
+	self._data[index] = new_value
 end
 
 function Array:__iter()
