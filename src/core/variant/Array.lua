@@ -20,6 +20,10 @@ local function neg_index(index, arr)
 		return index
 	end
 
+	if index >= 0 then
+		return index
+	end
+
 	local len = #arr
 
 	if index < 0 then
@@ -36,7 +40,8 @@ end
 --[=[
 	@class Array
 
-	--LEFT BLANK, PLEASE FILL IN
+	Wraps around a table to provide a more convenient API for array-like data structures.
+	Enforces the use of 1-based indexing and provides a variety of utility methods.
 ]=]
 local Array = {}
 Array.__index = Array
@@ -99,7 +104,7 @@ function Array:__newindex(index, newValue)
 		error(string.format("Cannot index Array with type %s!", typeof(index)), 4)
 	end
 
-	if index > self:Size() then
+	if index > (self:Size() + 1) then
 		error("Index is out of bounds!", 4)
 	end
 
