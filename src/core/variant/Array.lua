@@ -65,6 +65,8 @@ function Array._new(value)
 	if type(value) == "table" then
 		return Array.fromTable(value)
 	end
+
+	return Array.new()
 end
 
 function Array.fromTable(from: { [number]: any })
@@ -88,32 +90,13 @@ function Array:__index(index)
 end
 
 function Array:__newindex(index, new_value)
-	if self._readonly then
-		error("Cannot modify a readonly Array!", 4)
-	end
-
 	if Array[index] then
 		rawset(self, index, new_value)
 
 		return
 	end
 
-	index = neg_index(index, self._data)
-
-	if type(index) ~= "number" then
-		error(string.format("Cannot index Array with type %s!", typeof(index)), 4)
-	end
-
-	if index > (self:Size() + 1) then
-		error("Index is out of bounds!", 4)
-	end
-
-	if type(new_value) == "nil" then
-		self:Remove(index)
-		return
-	end
-
-	self._data[index] = new_value
+	self:Set(index, new_value)
 end
 
 function Array:__iter()
@@ -147,18 +130,30 @@ function Array:_recursive_hash(recursion_count)
 	return hash_fmix32(h)
 end
 
-function Array:_parse_changes()
-	if self._readonly then
-		error("Cannot modify a readonly Array!", 4)
+function Array:Append(value: any)
+	return self:PushBack(value)
+end
+
+function Array:AppendArray(array: { [number]: any })
+	array = Array(array)
+
+	if not array then
+		return
 	end
 
-	self._hash_need_update = true
+	if array:IsEmpty() then
+		return
+	end
+
+	for _, v in ipairs(array) do
+		self:PushBack(v)
+	end
 end
 
 function Array:Clear()
-	self:_parse_changes()
-
-	table.clear(self._data)
+	for k, _ in ipairs(self._data) do
+		self:Set(k, nil)
+	end
 end
 
 function Array:Back()
@@ -208,13 +203,12 @@ function Array:Duplicate(deep: boolean)
 end
 
 function Array:Erase(value: any)
-	self:_parse_changes()
 	local index = self:Find(value)
 	if not index then
 		return
 	end
 
-	table.remove(self._data, index)
+	self:Set(index, nil)
 end
 
 function Array:Front()
@@ -262,17 +256,6 @@ function Array:Hash()
 	end
 end
 
-function Array:Insert(index: number, value: any)
-	self:_parse_changes()
-	index = neg_index(index, self._data)
-
-	if index then
-		return table.insert(self._data, index, value)
-	else
-		return table.insert(self._data, value)
-	end
-end
-
 function Array:IsReadOnly()
 	return self._readonly == true
 end
@@ -282,13 +265,29 @@ function Array:IsEmpty()
 end
 
 function Array:Set(index: number, value: any)
-	self:_parse_changes()
+	if self._readonly then
+		error("Cannot modify a readonly Array!", 4)
+	end
+
 	index = neg_index(index, self._data)
-	if not self._data[index] then
+
+	if type(index) ~= "number" then
+		error(string.format("Cannot index Array with type %s!", typeof(index)), 4)
+	end
+
+	if index > (self:Size() + 1) then
+		error("Index is out of bounds!", 4)
+	end
+
+	if type(value) == "nil" then
+		table.remove(self._data, index)
+		self._hash_need_update = true
 		return
 	end
 
 	self._data[index] = value
+
+	self._hash_need_update = true
 end
 
 function Array:Size()
@@ -304,27 +303,19 @@ function Array:PickRandom()
 end
 
 function Array:PushBack(value: any)
-	self:_parse_changes()
-
-	self._data[ #self._data + 1 ] = value
+	self:Set(self:Size() + 1, value)
 end
 
 function Array:PushFront(value: any)
-	self:_parse_changes()
-	local data = self._data
-
-	for i = #data, 1, -1 do
-		data[i + 1] = data[i]
+	for i = self:Size(), 1, -1 do
+		self:Set(i + 1, self._data[i])
 	end
 
-	data[1] = value
+	self:Set(1, value)
 end
 
 function Array:Remove(index: number)
-	self:_parse_changes()
-	index = neg_index(index, self._data)
-
-	table.remove(self._data, index)
+	return self:Set(index, nil)
 end
 
 return Array
