@@ -238,7 +238,10 @@ function CharMap:Length()
 	return #self._string
 end
 
-function CharMap:XSplit(dilimeter: string)
+--[=[
+	Splits the string into an array of strings using the given `dilimeter`.
+]=]
+function CharMap:Split(dilimeter: string)
 	local parts = {}
 	local pattern = "[^" .. dilimeter:gsub("(%W)", "%%%1") .. "]+"
 	for part in self._string:gmatch(pattern) do
