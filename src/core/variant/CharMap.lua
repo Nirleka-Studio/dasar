@@ -28,13 +28,15 @@ function CharMap.new(text: string)
 end
 
 function CharMap._new(value)
-	if type(value) == "string" then
-		return CharMap.new(value)
-	elseif CharMap.IsCharMap(value) then
+	if not type(value) == "string" then
+		return nil
+	end
+
+	if CharMap.IsCharMap(value) then
 		return value
 	end
 
-	return nil
+	return CharMap.new(value)
 end
 
 function CharMap:__index(index)
