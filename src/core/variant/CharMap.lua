@@ -28,7 +28,7 @@ function CharMap.new(text: string)
 end
 
 function CharMap._new(value)
-	if not type(value) == "string" then
+	if type(value) ~= "string" then
 		return nil
 	end
 
