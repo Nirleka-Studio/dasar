@@ -62,7 +62,7 @@ function CharMap:__eq(value)
 end
 
 function CharMap:__iter()
-	return ipairs(self:Explode())
+	return ipairs(self._map)
 end
 
 function CharMap:__tostring()
@@ -236,6 +236,15 @@ end
 ]=]
 function CharMap:Length()
 	return #self._string
+end
+
+function CharMap:XSplit(dilimeter: string)
+	local parts = {}
+	local pattern = "[^" .. dilimeter:gsub("(%W)", "%%%1") .. "]+"
+	for part in self._string:gmatch(pattern) do
+		table.insert(parts, part)
+	end
+	return parts
 end
 
 --[=[
