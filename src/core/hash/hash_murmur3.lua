@@ -1,4 +1,4 @@
-local rotate_left = require("hash_funcs").rotate_left
+local rotate_left = require("./hash_funcs").rotate_left
 local bit32 = bit32
 local HASH_MURMUR3_SEED = 0
 

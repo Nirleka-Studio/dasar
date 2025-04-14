@@ -81,8 +81,8 @@ function Brewer.CreateModule(request: { [string]: string })
 	local module_inst = Instance.new("ModuleScript")
 	module_inst.Name = string.match(request.Name, "(.+)%.[^%.]+$")
 
-	module_inst:SetAttribute("url", request.url)
-	module_inst:SetAttribute("sha", request.sha)
+	module_inst:SetAttribute("url", request.Url)
+	module_inst:SetAttribute("sha", request.Sha)
 
 	ScriptEditorService:UpdateSourceAsync(module_inst, function()
 		return request.Content.Body
