@@ -31,8 +31,7 @@ function HttpRepReq.GetRepoContents(owner: string, repo: string, path: string, t
 	local contents = {}
 	path = path or ""
 
-	local api_url = string.format("https://api.github.com/repos/ %s / %s /contents/ %s ", owner, repo, path)
-
+	local api_url = string.format("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, path)
 	local headers = {
 		["Accept"] = "application/vnd.github.v3+json"
 	}
@@ -68,7 +67,8 @@ function HttpRepReq.GetRepoContents(owner: string, repo: string, path: string, t
 				Path = item.path,
 				Name = item.name,
 				Url = item.download_url,
-				Size = item.size
+				Size = item.size,
+				Sha = item.sha
 			})
 		elseif item.type == "dir" then
 			table.insert(contents, {
@@ -119,7 +119,7 @@ function HttpRepReq.CreateInstancesFromRepo(contents: { [string]:string }, paren
 		local file_inst
 		local extension = string.match(item.Name, "%.([^%.]+)$")
 
-		file_inst.Name = item.Name
+		file_inst.Name = string.match(item.Name, "(.+)%.[^%.]+$") or item.Name
 
 		local parent_path = string.match(item.Path, "(.*)/[^/]*$") or ""
 		local parent_folder = path_to_instance[parent_path] or parent
