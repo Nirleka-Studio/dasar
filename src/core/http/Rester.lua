@@ -46,6 +46,32 @@ function Rester.get_content(request_arr: { [string]: any })
 end
 
 --[=[
+	This is fucked up hack.
+	Doesn't efficiently get the descendants of the given path.
+	Fetches the full tree and filters it. Which is a terrible way for doing it.
+]=]
+function Rester.get_descendants(request_arr)
+	assert(type(request_arr) == "table", "`request_arr` must be a table")
+
+	local path = request_arr.path or error("Missing required parameter: path")
+
+	return Rester.get_tree_recursive(request_arr):andThen(function(response)
+		local tree = response.tree or error("Invalid tree response structure")
+		local prefix = path:gsub("^/", ""):gsub("/$", "") .. "/"
+
+		local descendants = {}
+
+		for _, entry in ipairs(tree) do
+			if entry.path:sub(1, #prefix) == prefix then
+				table.insert(descendants, entry)
+			end
+		end
+
+		return descendants
+	end)
+end
+
+--[=[
 	Returns the response of the request to `https://api.github.com/rate_limit`
 	to get the rate limit of the current IP address. Or the given token.
 	Does not reduce the rate limit when called.
