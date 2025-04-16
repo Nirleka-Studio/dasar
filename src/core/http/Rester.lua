@@ -7,9 +7,9 @@ local HttpPromise = require("./HttpPromise")
 
 local DEFAULT_MEDIA_TYPE = "application/vnd.github.v3+json"
 local URL_GITHUB_API = "https://api.github.com"
-local URL_GITHUB_CONTENTS = `{URL_GITHUB_API}/repos/%s/%s/contents/%s`
-local URL_GITHUB_TREE = `{URL_GITHUB_API}/repos/%s/%s/git/trees/%s?recursive=1`
-local URL_GITHUB_RATELIMIT = `{URL_GITHUB_API}/rate_limit`
+local URL_GITHUB_CONTENTS = `/repos/%s/%s/contents/%s`
+local URL_GITHUB_TREE = `/repos/%s/%s/git/trees/%s?recursive=1`
+local URL_GITHUB_RATELIMIT = `/rate_limit`
 local HTTP_VALID_METHODS = {
 	["GET"] = true,
 	["POST"] = true,
@@ -20,6 +20,11 @@ local HTTP_VALID_METHODS = {
 
 --[=[
 	@class Rester
+
+	Makes your life less shittier (but still shit) when interacting with the Github REST API.
+	Based on the already confusing "Octokit.js" and the dogshit of a documentation.
+
+	Rester? So thats why. It rests my mental state 6 feet under.
 ]=]
 local Rester = {}
 Rester.__index = Rester
@@ -29,9 +34,14 @@ function Rester.new(arr: { [string]: any })
 end
 
 --[=[
-	TODO: Add doc
+	TODO: Im too mentally fucked to write this shitty doc.
 ]=]
 function Rester.get_content(request_arr: { [string]: any })
+	--[[
+		"A function that basically does the same shit by calling another function
+		but shortens the operation so you can be a lazy little shit is a good function."
+			- The Founder, 2025
+	]]
 	assert(type(request_arr) == "table", "`request_arr` must be a table")
 
 	local owner = request_arr.owner or error("Missing required parameter: owner")
@@ -46,29 +56,14 @@ function Rester.get_content(request_arr: { [string]: any })
 end
 
 --[=[
-	This is fucked up hack.
-	Doesn't efficiently get the descendants of the given path.
-	Fetches the full tree and filters it. Which is a terrible way for doing it.
+	I swear to whatever god that doesnt exists, if the goddamn solution to get the descendants
+	of a goddamn folder, file, or whatever bullshit within a Github repository is by fucking fetching
+	the contents of the file one by fucking one, draining our limit quota, THEN IM FUCKING
+
+	This function retrieves the contents and descendant files and folder within the specified path.
 ]=]
 function Rester.get_descendants(request_arr)
-	assert(type(request_arr) == "table", "`request_arr` must be a table")
-
-	local path = request_arr.path or error("Missing required parameter: path")
-
-	return Rester.get_tree_recursive(request_arr):andThen(function(response)
-		local tree = response.tree or error("Invalid tree response structure")
-		local prefix = path:gsub("^/", ""):gsub("/$", "") .. "/"
-
-		local descendants = {}
-
-		for _, entry in ipairs(tree) do
-			if entry.path:sub(1, #prefix) == prefix then
-				table.insert(descendants, entry)
-			end
-		end
-
-		return descendants
-	end)
+	-- removed cuz github is a piece of shit
 end
 
 --[=[
@@ -109,9 +104,9 @@ function Rester.get_tree_recursive(request_arr)
 
 	local owner = request_arr.owner or error("Missing required parameter: owner")
 	local repo = request_arr.repo or error("Missing required parameter: repo")
-	local path = request_arr.branch or error("Missing required parameter: branch")
+	local path = request_arr.path or error("Missing required parameter: branch")
 
-	local url = URL_GITHUB_TREE:format(owner, repo, path)
+	local url = "GET "..URL_GITHUB_TREE:format(owner, repo, path)
 
 	return Rester.request(url, {
 		["Headers"] = request_arr.headers or nil
@@ -179,7 +174,7 @@ function Rester.request(base_url: string, request_arr: { [string]: any }?)
 		end
 	end
 
-	local url = URL_GITHUB_API .. "/" .. final_path
+	local url = URL_GITHUB_API .. "/" .. endpoint_template:gsub("^/", "")
 
 	return HttpPromise.request({
 		Url = url,
@@ -187,5 +182,11 @@ function Rester.request(base_url: string, request_arr: { [string]: any }?)
 		Headers = headers
 	})
 end
+
+--[[
+	You know, when the Windows XP source code got leaked,
+	when I searched up the word 'bastard' it came in at 18 results.
+	We are a men of culture. And fucking suffering.
+]]
 
 return Rester
