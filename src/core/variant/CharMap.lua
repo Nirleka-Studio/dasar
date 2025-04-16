@@ -44,6 +44,15 @@ function CharMap:__index(index)
 		return CharMap[index]
 	elseif type(index) == "number" and self._map[index] then
 		return self._map[index]
+	elseif type(self._string[index]) == "function" then
+		--[[
+			This is pretty hacky. As if we do shit like `print(CharMap:upper())` as upper() is part
+			of the lua string library, it wont work shit as the goddamn `:` operator fucks everything
+			up by passing `self` as the first parameter to the function.
+		]]
+		return function(_, ...)
+			return self._string[index](self._string, ...)
+		end
 	else
 		return self._string[index]
 	end
