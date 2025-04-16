@@ -239,6 +239,45 @@ function CharMap:Length()
 end
 
 --[=[
+	Similarity based on the Sorensen-Dice coefficient.
+	Returns a number between 0 and 1, where 0 means no similarity and 1 means identical.
+]=]
+function CharMap:Similarity(value: string)
+	value = CharMap(value)
+
+	if self:IsEqualTo(value) then
+		-- Both strings are equally similar
+		return 1
+	end
+
+	if self:Length() < 2 and value:Length() < 2 then
+		-- Both strings are empty or have only one character
+		-- No way to calculate similarity without a single bigram
+		return 0
+	end
+
+	local self_size = self:Length() - 1
+	local target_size = value:Length() - 1
+
+	local sum = self_size + target_size
+	local inter = 0
+
+	for i = 1, self_size do
+		local i0 = self[i]
+		local i1 = self[i + 1]
+
+		for j = 1, target_size do
+			if i0 == value[j] and i1 == value[j + 1] then
+				inter = inter + 1
+				break
+			end
+		end
+	end
+
+	return (2 * inter) / sum
+end
+
+--[=[
 	Splits the string into an array of strings using the given `dilimeter`.
 ]=]
 function CharMap:Split(dilimeter: string)
