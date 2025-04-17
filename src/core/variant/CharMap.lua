@@ -248,6 +248,41 @@ function CharMap:Length()
 end
 
 --[=[
+	Normalizes the string URL by removing redundant slashes
+	while preserving the protocol format and ensuring
+	it ends with a single trailing slash.
+
+	The additional `p_protocol` parameter can be used for custom protocols.
+
+	```lua
+	local url = CharMap("https://example.com//path//to//resource")
+	print(url:UrlNormalize()) -- "https://example.com/path/to/resource/"
+
+	local url = CharMap("file://example.com//path//to//resource")
+	print(url:UrlNormalize("file")) -- "file://example.com/path/to/resource/"
+	```
+]=]
+function CharMap:UrlNormalize(p_protocol: string?)
+	p_protocol = p_protocol or "^[%a][%w+.-]*://"
+
+	local protocol, rest = self._string:match("(" .. p_protocol .. ")(.*)")
+	if not protocol then
+		rest = self._string
+		protocol = ""
+	end
+
+	-- replace mutliple slashes with one
+	rest = rest:gsub("//+", "/")
+
+	-- always makes it ends with a single trailing slash
+	if not rest:match("/$") then
+		rest = rest .. "/"
+	end
+
+	return protocol .. rest
+end
+
+--[=[
 	Similarity based on the Sorensen-Dice coefficient.
 	Returns a number between 0 and 1, where 0 means no similarity and 1 means identical.
 ]=]
