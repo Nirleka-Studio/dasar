@@ -7,15 +7,25 @@ local HttpPromise = require("./HttpPromise")
 
 local DEFAULT_MEDIA_TYPE = "application/vnd.github.v3+json"
 local URL_GITHUB_API = "https://api.github.com"
-local URL_GITHUB_CONTENTS = `/repos/%s/%s/contents/%s`
-local URL_GITHUB_TREE = `/repos/%s/%s/git/trees/%s?recursive=1`
-local URL_GITHUB_RATELIMIT = `/rate_limit`
 local HTTP_VALID_METHODS = {
 	["GET"] = true,
 	["POST"] = true,
 	["PATCH"] = true,
 	["PUT"] = true,
 	["DELETE"] = true
+}
+
+local ENDPOINTS = {
+	get_content = "GET /repos/{owner}/{repo}/contents/{path}",
+	get_tree = "GET /repos/{owner}/{repo}/git/trees/{tree_sha}",
+	get_tree_recursive = "GET /repos/{owner}/{repo}/git/trees/{tree}?recursive=1",
+	get_rate_limit = "GET /rate_limit",
+	get_user = "GET /user",
+}
+
+local HEADERS_ALIASES = {
+	auth = "Authentication",
+	accept = "Accept",
 }
 
 --[=[
@@ -29,41 +39,38 @@ local HTTP_VALID_METHODS = {
 local Rester = {}
 Rester.__index = Rester
 
-function Rester.new(arr: { [string]: any })
-	return setmetatable(arr, Rester)
+type RequestParameter = {
+	headers: { [string] : string }?,
+	owner: string?,
+	repo: string?,
+	path: string?,
+	tree: string?
+}
+
+function Rester.new()
+	return setmetatable({
+		auth = "",
+		owner = "",
+		repo = "",
+		path = ""
+	}, Rester)
+end
+
+function Rester:ValidateAuthentication()
+	return Rester.request(ENDPOINTS.get_user)
 end
 
 --[=[
 	TODO: Im too mentally fucked to write this shitty doc.
 ]=]
-function Rester.get_content(request_arr: { [string]: any })
+function Rester.get_content(request_param: { [string]: any })
 	--[[
 		"A function that basically does the same shit by calling another function
 		but shortens the operation so you can be a lazy little shit is a good function."
 			- The Founder, 2025
 	]]
-	assert(type(request_arr) == "table", "`request_arr` must be a table")
 
-	local owner = request_arr.owner or error("Missing required parameter: owner")
-	local repo = request_arr.repo or error("Missing required parameter: repo")
-	local path = request_arr.path or error("Missing required parameter: path")
-
-	local url = URL_GITHUB_CONTENTS:format(owner, repo, path)
-
-	return Rester.request(url, {
-		["Headers"] = request_arr.headers or nil
-	})
-end
-
---[=[
-	I swear to whatever god that doesnt exists, if the goddamn solution to get the descendants
-	of a goddamn folder, file, or whatever bullshit within a Github repository is by fucking fetching
-	the contents of the file one by fucking one, draining our limit quota, THEN IM FUCKING
-
-	This function retrieves the contents and descendant files and folder within the specified path.
-]=]
-function Rester.get_descendants(request_arr)
-	-- removed cuz github is a piece of shit
+	return Rester.request(ENDPOINTS, request_param)
 end
 
 --[=[
@@ -87,30 +94,23 @@ end
 	```
 ]=]
 function Rester.get_limit(token: string?)
-	return HttpPromise.request({
-		Url = URL_GITHUB_RATELIMIT,
-		Method = "GET",
-		Headers = {
-			["Accept"] = DEFAULT_MEDIA_TYPE
-		}
-	})
+	return Rester.request(ENDPOINTS.get_rate_limit, {})
 end
 
 --[=[
-	TODO: Add doc
-]=]
-function Rester.get_tree_recursive(request_arr)
-	assert(type(request_arr) == "table", "`request_arr` must be a table")
+	Returns the entire tree with its SHA or branch name.
+	Lists all the files.
 
-	local owner = request_arr.owner or error("Missing required parameter: owner")
-	local repo = request_arr.repo or error("Missing required parameter: repo")
-	local path = request_arr.path or error("Missing required parameter: branch")
-
-	local url = "GET "..URL_GITHUB_TREE:format(owner, repo, path)
-
-	return Rester.request(url, {
-		["Headers"] = request_arr.headers or nil
+	```lua
+	Rester.get_tree_recursive({
+		owner = "Nirleka-Studio",
+		repo = "dasar",
+		tree = "master"
 	})
+	```
+]=]
+function Rester.get_tree_recursive(request_param: RequestParameter)
+	return Rester.request(ENDPOINTS.get_tree_recursive, request_param)
 end
 
 --[=[
@@ -131,9 +131,10 @@ function Rester.http_validate_method(method: string)
 end
 
 --[=[
+	Returns an HttpPromise object with the given request.
 
 	```lua
-	Rester.request("POST /repos/{owner}/{repo}/{path}", {
+	Rester.request("GET /repos/{owner}/{repo}/{path}", {
 		owner = "Nirleka-Studio",
 		repo = "dasar",
 		path = ""
@@ -143,34 +144,32 @@ end
 	})
 	```
 ]=]
-function Rester.request(base_url: string, request_arr: { [string]: any }?)
+function Rester.request(base_url: string, request_param: RequestParameter?)
 	assert(type(base_url) == "string", "`base_url` must be a string")
-	assert(type(request_arr) == "table", "`request_arr` must be a table")
+	assert(type(request_param) == "table", "`request_param` must be a table")
 
 	base_url = CharMap(base_url)
 	local segments = base_url:Split(" ")
 	local method = segments[1]:upper()
-	local endpoint_template = CharMap(segments[2])
+	local endpoint_template = CharMap(segments[2]):UrlNormalize()
 
 	if not Rester.http_validate_method(method) then
 		error("Invalid HTTP method: " .. method)
 	end
 
-	local final_path = endpoint_template:gsub("{(.-)}", function(key)
-		local value = request_arr[key]
-		if not value then
-			error("Missing required parameter: " .. key)
-		end
-		return tostring(value)
-	end)
+	local final_path = endpoint_template:Format(request_param)
 
 	local headers = {
-		["Accept"] = request_arr.accept or DEFAULT_MEDIA_TYPE,
+		["Accept"] = DEFAULT_MEDIA_TYPE,
 	}
 
-	if request_arr.headers then
-		for key, value in pairs(request_arr.headers) do
-			headers[key] = value
+	if request_param.headers then
+		for key, value in pairs(request_param.headers) do
+			if HEADERS_ALIASES[key] then
+				headers[HEADERS_ALIASES[key]] = value
+			else
+				headers[key] = value
+			end
 		end
 	end
 
