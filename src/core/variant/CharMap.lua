@@ -397,7 +397,7 @@ function CharMap:UrlNormalize()
 		rest = rest .. "/"
 	end
 
-	return protocol .. rest
+	return CharMap(protocol .. rest)
 end
 
 --[=[
