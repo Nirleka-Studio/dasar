@@ -107,7 +107,7 @@ function Array:__len()
 	return self:Size()
 end
 
-function Array.isArray(value)
+function Array.isArray(value: any)
 	return type(value) == "table" and getmetatable(value) == Array
 end
 

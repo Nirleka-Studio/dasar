@@ -98,6 +98,59 @@ function CharMap.IsCharMap(value)
 end
 
 --[=[
+	Returns an array of strings between the given `opening` and `closing` strings.
+
+	```lua
+	local text = CharMap("Hello [world] and [universe]")
+	local results = text:Between("[", "]")
+	print(results) -- {"world", "universe"}
+	```
+]=]
+function CharMap:Between(opening: string, closing: string)
+	--[[
+		Oh god.
+		This is a jumbled mess of a function made by me.
+	]]
+	local results = {}
+	local i = 1
+	local text = self._string
+	local len = #text
+
+	while i <= len do
+		local start = string.find(text, opening, i, true)
+		if not start then break end
+
+		local level = 1
+		local j = start + string.len(opening)
+		local contentStart = j
+
+		while j <= len and level > 0 do
+			local nextOpen = string.find(text, opening, j, true)
+			local nextClose = string.find(text, closing, j, true)
+
+			if nextClose and (not nextOpen or nextClose < nextOpen) then
+				level = level - 1
+				if level == 0 then
+
+					local content = string.sub(text, contentStart, nextClose - 1)
+					table.insert(results, content)
+				end
+				j = nextClose + string.len(closing)
+			elseif nextOpen then
+				level = level + 1
+				j = nextOpen + string.len(opening)
+			else
+				break
+			end
+		end
+
+		i = (start + 1)
+	end
+
+	return results
+end
+
+--[=[
 	Returns true if the string begins with the given `text`.
 	See also `CharMap:EndsWith()`.
 ]=]
@@ -215,6 +268,74 @@ function CharMap:ExplodeToClass(func)
 	end
 
 	return characters
+end
+
+--[=[
+	Returns a new CharMap of the formatted string by replacing all occurrences
+	of `placeholder` with the corresponding values.
+
+	The placeholder must always have an underscore to separate the opening and closing.
+	Such as "{_}", and "_}" or "{_" are invalid. If a placeholder is invalid, the function
+	will replace the placeholders in the CharMap with the order of the given values.
+
+	If theres no occurences, it will simply return the original CharMap.
+
+	```lua
+	local text = CharMap("Hello there {1} and {2}!")
+	local formatted = text:Format({
+		"world",
+		"universe"
+	})
+
+	print(formatted) -- "Hello there world and universe!"
+
+	local text = CharMap("Hello there {player} and {pet}!")
+	local formatted = text:Format({
+		pet = "dog",
+		player = "Nirleka"
+	})
+
+	print(formatted) -- "Hello there Nirleka and dog!"
+	```
+]=]
+function CharMap:Format(values: { [string | number]: any }, placeholder: string)
+	-- O(sobbing miserably)
+
+	placeholder = placeholder or "{_}"
+	local formatted: string = self._string
+	local opening, closing = placeholder:match("(.-)_(.*)")
+	local always_use_order = false
+	if not opening or not closing then
+		always_use_order = true
+	end
+	local occurrences: { [number] : string } = self:Between(opening, closing)
+	if not occurrences or #occurrences == 0 then
+		return self
+	end
+
+	local numeric_placeholders_used = {}
+
+	for key, value in pairs(values) do
+		local str_value = tostring(value)
+
+		if type(key) == "number" or always_use_order then
+			-- for any numbers, or always_use_order is true,
+			-- just replace the placeholders by order
+			if key <= #occurrences and not numeric_placeholders_used[key] then
+				local placeholder_content = occurrences[key]
+				local to_replace = opening .. placeholder_content .. closing
+				formatted = formatted:gsub(to_replace, str_value, 1)
+				numeric_placeholders_used[key] = true
+			end
+		elseif type(key) == "string" then
+			-- for string keys, replace ALL occurrences with that name
+			local str_key = tostring(key)
+			local to_replace = opening .. str_key .. closing
+			formatted = formatted:gsub(to_replace, str_value)
+		end
+	end
+
+	return CharMap.new(formatted)
 end
 
 --[=[
