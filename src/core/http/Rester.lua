@@ -20,7 +20,7 @@ local ENDPOINTS = {
 	get_tree = "GET /repos/{owner}/{repo}/git/trees/{tree_sha}",
 	get_tree_recursive = "GET /repos/{owner}/{repo}/git/trees/{tree}?recursive=1",
 	get_rate_limit = "GET /rate_limit",
-	get_user = "GET /user",
+	get_user = "GET /user"
 }
 
 local HEADERS_ALIASES = {
@@ -35,6 +35,8 @@ local HEADERS_ALIASES = {
 	Based on the already confusing "Octokit.js" and the dogshit of a documentation.
 
 	Rester? So thats why. It rests my mental state 6 feet under.
+
+	I swear to fucking god the GitHub API returns the most inconsistent shit.
 ]=]
 local Rester = {}
 Rester.__index = Rester
@@ -58,6 +60,42 @@ end
 
 function Rester:ValidateAuthentication()
 	return Rester.request(ENDPOINTS.get_user)
+end
+
+--[=[
+	It decodes Base64 to normal string. What are you fucking stupid?
+	Do I have to write this out for you??? huh????
+
+	This Rester shit is originally written in April 15. Now its 18. How many fucking days
+	have i tried to fix this shitty bastard?
+
+	This function exists cuz github is a piece of shit and returns base64 content while in other
+	endpoints it returns the raw URL. Im fucking needing a therapist after this shit.
+
+	Taken from [a DevForum post](https://devforum.roblox.com/t/base64-encoding-and-decoding-in-lua/
+	Decodes a base64 string into a normal string.
+
+	```lua
+	local decoded = Brewer.DecodeBase64("SGVsbG8gV29ybGQh")
+	print(decoded) -- "Hello World!"
+	```
+]=]
+function Rester.base64_decode(data: string)
+	local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+	data = string.gsub(data, '[^'..b..'=]', '')
+
+	return (data:gsub('.', function(x)
+		if (x == '=') then return '' end
+		local r,f='',(b:find(x)-1)
+		for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+		return r;
+	end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+		if (#x ~= 8) then return '' end
+		local c=0
+		for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
+		return string.char(c)
+	end))
 end
 
 --[=[
@@ -173,7 +211,7 @@ function Rester.request(base_url: string, request_param: RequestParameter?)
 		end
 	end
 
-	local url = URL_GITHUB_API .. "/" .. endpoint_template:gsub("^/", "")
+	local url = URL_GITHUB_API .. "/" .. final_path:gsub("^/", "")
 
 	return HttpPromise.request({
 		Url = url,
