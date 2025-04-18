@@ -369,6 +369,24 @@ function CharMap:Length()
 end
 
 --[=[
+	Returns the last string before the delimeter.
+
+	```lua
+	local text = CharMap("/path/to/resource")
+	print(path:LastDelim("/")) -- "resource"
+	```
+]=]
+function CharMap:LastDelim(delimeter: string)
+	local lastSeparator = self._string:match(".*/()")
+
+		if lastSeparator then
+			return CharMap.new(self._string:sub(lastSeparator))
+		else
+			return self
+		end
+end
+
+--[=[
 	Normalizes the string URL by removing redundant slashes
 	while preserving the protocol format and ensuring
 	it ends with a single trailing slash.
