@@ -7,6 +7,7 @@ local HttpPromise = require("./HttpPromise")
 
 local DEFAULT_MEDIA_TYPE = "application/vnd.github.v3+json"
 local URL_GITHUB_API = "https://api.github.com"
+
 local HTTP_VALID_METHODS = {
 	["GET"] = true,
 	["POST"] = true,
@@ -100,7 +101,8 @@ function Rester:ValidateAuthentication()
 end
 
 --[=[
-
+	Returns the contents of a single commit reference.
+	You must have `read` access for the repository to use this endpoint.
 ]=]
 function Rester.getCommit(request_param: RequestParameter)
 	assert(type(request_param) == "table", "`request_param` must be a table")
@@ -109,7 +111,10 @@ function Rester.getCommit(request_param: RequestParameter)
 end
 
 --[=[
-
+	Gets the contents of a file or directory in a repository.
+	Specify the file path or directory with the `path` parameter.
+	If you omit the `path` parameter, you will receive the contents
+	of the repository's root directory.
 ]=]
 function Rester.getContent(request_param: RequestParameter)
 	--[[
@@ -155,7 +160,10 @@ function Rester.getMethodAndPath(endpoint: string, request_param: RequestParamet
 end
 
 --[=[
-
+	Returns a single reference from your Git database.
+	The {ref} in the URL must be formatted as heads/<branch name>
+	for branches and tags/<tag name> for tags.
+	If the {ref} doesn't match an existing ref, a 404 is returned.
 ]=]
 function Rester.getRef(request_param: RequestParameter)
 	assert(type(request_param) == "table", "`request_param` must be a table")
@@ -164,7 +172,11 @@ function Rester.getRef(request_param: RequestParameter)
 end
 
 --[=[
+	Returns a single tree using the SHA1 value or ref name for that tree.
 
+	If truncated is true in the response then the number of items in the tree array
+	exceeded our maximum limit. If you need to fetch more items, use the non-recursive method
+	of fetching trees, and fetch one sub-tree at a time.
 ]=]
 function Rester.getTree(request_param: RequestParameter)
 	assert(type(request_param) == "table", "`request_param` must be a table")
