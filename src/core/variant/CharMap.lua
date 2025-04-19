@@ -396,7 +396,7 @@ end
 	print(url:UrlNormalize()) -- "https://example.com/path/to/resource/"
 	```
 ]=]
-function CharMap:UrlNormalize()
+function CharMap:UrlNormalize(trailing_slash: boolean)
 	local protocol, rest = self._string:match("^([%a][%w+.-]*:)(.*)")
 
 	if not protocol then
@@ -411,8 +411,16 @@ function CharMap:UrlNormalize()
 
 	rest = rest:gsub("//+", "/")
 
+	-- turns out, github is very sensitive to URL.
+	-- so if we add a trailing slash it will fuck us up royally.
 	if not rest:match("/$") then
-		rest = rest .. "/"
+		if trailing_slash then
+			rest = rest .. "/"
+		end
+	else
+		if not trailing_slash then
+			rest:gsub("/$", "")
+		end
 	end
 
 	return CharMap(protocol .. rest)

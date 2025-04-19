@@ -201,7 +201,7 @@ end
 	Non case sensitive.
 ]=]
 function Rester.isValidMethod(method: string)
-	if not type(method) == "string"	then
+	if type(method) ~= "string"	then
 		return false
 	end
 
