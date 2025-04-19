@@ -15,7 +15,7 @@ local Provider = {}
 
 function Provider._preload_async(assets)
 	
-end)
+end
 
 function Provider.preload_async(assets: Instance | string | { [any] : Instance | string })
 	return Promise.try(Provider._preload_async, assets)
