@@ -23,7 +23,7 @@ local ENDPOINTS = {
 	get_commit = "GET /repos/{owner}/{repo}/git/commits/{commit_sha}",
 	get_content = "GET /repos/{owner}/{repo}/contents/{path}",
 	get_tree = "GET /repos/{owner}/{repo}/git/trees/{tree_sha}",
-	get_tree_recursive = "GET /repos/{owner}/{repo}/git/trees/{tree}?recursive=1",
+	get_tree_recursive = "GET /repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1",
 	get_rate_limit = "GET /rate_limit",
 	get_user = "GET /user",
 	get_ref = "GET /repos/{owner}/{repo}/git/ref/heads/{branch}"
@@ -151,7 +151,8 @@ function Rester:GetAllFileContentsAndDirectories(request_param: RequestParameter
 	local tree: TreeData = Rester.getTree({
 		owner = self.owner,
 		repo = self.repo,
-		tree_sha = request_param.tree_sha
+		tree_sha = request_param.tree_sha,
+		recursive = true
 	}):andThen(HttpPromise.decodeJson)
 		:catch(HttpPromise.logFailedRequests)
 		:awaitValue()
