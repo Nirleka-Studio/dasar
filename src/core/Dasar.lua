@@ -34,6 +34,14 @@ local function attempt_require(module, resolve, reject)
 	return
 end
 
+local function loader_predicate(p_module)
+	local r_module = Dasar._require(p_module):andThen(function(result)
+		if result then
+			return true
+		end
+	end)
+end
+
 local function resolve_module_from_path(module, module_path, start_dir, resolve, reject)
 	local cur_dir = start_dir
 	local count = module_path:GetNameCount()

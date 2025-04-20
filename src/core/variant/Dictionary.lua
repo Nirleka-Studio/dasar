@@ -34,8 +34,10 @@ function Dictionary.new()
 	return setmetatable({
 		_data = {},
 		_readonly = false,
+		_size_cache = 0,
 		_hash_cache = 0,
-		_hash_need_update = true
+		_hash_need_update = true,
+		_size_need_update = true
 	}, Dictionary)
 end
 
@@ -241,17 +243,25 @@ function Dictionary:Set(key: any, value: any)
 		error("Cannot modify a readonly Dictionary!", 4)
 	end
 
+	self._size_need_update = true
 	self._hash_need_update = true
 	self._data[key] = value
 end
 
 function Dictionary:Size()
-	local count = 0
-	for _ in pairs(self._data) do
-		count += 1
-	end
+	if self._size_need_update then
+		local count = 0
+		for _ in pairs(self._data) do
+			count += 1
+		end
 
-	return count
+		self._size_cache = count
+		self._size_need_update = false
+
+		return count
+	else
+		return self._size_cache
+	end
 end
 
 function Dictionary:Merge(dictionary: { [any] : any}, overwrite: boolean)
