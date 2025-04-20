@@ -140,6 +140,10 @@ function Rester:ValidateAuthentication()
 	return Rester.request(ENDPOINTS.get_user)
 end
 
+--[=[
+	Returns the directories and files in arrays.
+	Automatically decodes the file contents if it is in base64.
+]=]
 function Rester:GetAllFileContentsAndDirectories(request_param: RequestParameter)
 	ERR_TYPE(request_param, "request_param", "table")
 
