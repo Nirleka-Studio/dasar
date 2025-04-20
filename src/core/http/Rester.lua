@@ -30,7 +30,7 @@ local ENDPOINTS = {
 }
 
 local HEADERS_ALIASES = {
-	auth = "Authentication",
+	auth = "Authorization",
 	accept = "Accept",
 }
 
@@ -143,6 +143,9 @@ function Rester:GetAllFileContentsAndDirectories(request_param: RequestParameter
 		owner = self.owner,
 		repo = self.repo,
 		tree_sha = request_param.tree_sha,
+		headers = {
+			auth = self.auth
+		},
 		recursive = true
 	}):andThen(HttpPromise.decodeJson)
 		:catch(HttpPromise.logFailedRequests)
@@ -168,15 +171,19 @@ function Rester:GetAllFileContentsAndDirectories(request_param: RequestParameter
 			new_file.extension = string.match(CharMap(index.path):LastDelim("/"):ToString(), "%.([^%.]+)$")
 			new_file.path = index.path
 			new_file.sha = index.sha
+			new_file.name = string.match(CharMap(index.path):LastDelim("/"):ToString(), "(.+)%.[^%.]+$")
 
 			-- another black magic.
 			local fetch_content: ContentResponse = Rester.getContent({
 				owner = self.owner,
 				repo = self.repo,
-				path = index.path
+				path = index.path,
+				headers = {
+					auth = self.auth
+				},
 			}):andThen(HttpPromise.decodeJson)
-			:catch(HttpPromise.logFailedRequests)
-			:awaitValue()
+				:catch(HttpPromise.logFailedRequests)
+				:awaitValue()
 
 			if fetch_content.encoding == "base64" then
 				new_file.content = Rester.base64Decode(fetch_content.content)
@@ -355,7 +362,9 @@ function Rester.request(endpoint: string, request_param: RequestParameter?)
 
 	if request_param.headers then
 		for key, value in pairs(request_param.headers) do
+			print(key, value)
 			if HEADERS_ALIASES[key] then
+				print("FUCK, THERE IS!", key, value)
 				headers[HEADERS_ALIASES[key]] = value
 			else
 				headers[key] = value
@@ -363,7 +372,15 @@ function Rester.request(endpoint: string, request_param: RequestParameter?)
 		end
 	end
 
+	-- im getting lazy at this point.
+	if headers.Authorization then
+		print(headers)
+		headers.Authorization = "Bearer "..headers.Authorization
+	end
+
 	local url = URL_GITHUB_API .. "/" .. final_path:gsub("^/", "")
+	
+	print(url, headers, request_param)
 
 	return HttpPromise.request({
 		Url = url,
