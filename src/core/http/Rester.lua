@@ -379,8 +379,6 @@ function Rester.request(endpoint: string, request_param: RequestParameter?)
 	end
 
 	local url = URL_GITHUB_API .. "/" .. final_path:gsub("^/", "")
-	
-	print(url, headers, request_param)
 
 	return HttpPromise.request({
 		Url = url,

@@ -24,14 +24,14 @@ local Brewer = {}
 ]]
 
 function Brewer.InstallRepo(rester, branch: string, parent: Instance)
+	parent = parent or workspace
+
 	local dirs, files = rester:GetAllFileContentsAndDirectories({
 		tree_sha = branch
 	})
 
 	local path_to_instance = {}
 	path_to_instance[""] = parent
-
-	local file_data = {}
 
 	for _, item in ipairs(dirs) do
 		local folder_inst = Brewer.createFolder(item)
