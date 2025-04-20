@@ -80,6 +80,9 @@ function Brewer.createModule(dir: { [string] : any })
 	module_inst:SetAttribute("path", dir.path)
 	module_inst:SetAttribute("sha", dir.sha)
 
+	-- fuck you Roblox, bypass BaseScript.Source
+	module_inst:SetAttribute("content", dir.content)
+
 	ScriptEditorService:UpdateSourceAsync(module_inst, function()
 		return dir.content
 	end)
