@@ -2,8 +2,11 @@
 -- NirlekaDev
 -- April 15, 2025
 
+local AssertMacros = require("../error/assert_macros")
 local CharMap = require("../variant/CharMap")
 local HttpPromise = require("./HttpPromise")
+
+local ERR_TYPE = AssertMacros.ERR_TYPE
 
 local DEFAULT_MEDIA_TYPE = "application/vnd.github.v3+json"
 local URL_GITHUB_API = "https://api.github.com"
@@ -45,11 +48,13 @@ local Rester = {}
 Rester.__index = Rester
 
 type RequestParameter = {
+	branch: string,
+	commit_sha: string,
 	headers: { [string] : string }?,
 	owner: string?,
 	repo: string?,
 	path: string?,
-	tree: string?,
+	tree_sha: string?,
 	recursive: boolean,
 	ref: string?
 }
@@ -105,7 +110,7 @@ end
 	You must have `read` access for the repository to use this endpoint.
 ]=]
 function Rester.getCommit(request_param: RequestParameter)
-	assert(type(request_param) == "table", "`request_param` must be a table")
+	ERR_TYPE(request_param, "request_param", "table")
 
 	return Rester.request(ENDPOINTS.get_commit, request_param)
 end
@@ -122,7 +127,7 @@ function Rester.getContent(request_param: RequestParameter)
 		but shortens the operation so you can be a lazy little shit is a good function."
 			- The Founder, 2025
 	]]
-	assert(type(request_param) == "table", "`request_param` must be a table")
+	ERR_TYPE(request_param, "request_param", "table")
 
 	return Rester.request(ENDPOINTS.get_content, request_param)
 end
@@ -142,8 +147,8 @@ end
 	```
 ]=]
 function Rester.getMethodAndPath(endpoint: string, request_param: RequestParameter)
-	assert(type(endpoint) == "string", "`endpoint` must be a string")
-	assert(type(request_param) == "table", "`endpoint` must be a table")
+	ERR_TYPE(endpoint, "endpoint", "string")
+	ERR_TYPE(request_param, "request_param", "table")
 
 	endpoint = CharMap(endpoint)
 	local segments = endpoint:Split(" ")
@@ -166,7 +171,7 @@ end
 	If the {ref} doesn't match an existing ref, a 404 is returned.
 ]=]
 function Rester.getRef(request_param: RequestParameter)
-	assert(type(request_param) == "table", "`request_param` must be a table")
+	ERR_TYPE(request_param, "request_param", "table")
 
 	return Rester.request(ENDPOINTS.get_ref, request_param)
 end
@@ -179,7 +184,7 @@ end
 	of fetching trees, and fetch one sub-tree at a time.
 ]=]
 function Rester.getTree(request_param: RequestParameter)
-	assert(type(request_param) == "table", "`request_param` must be a table")
+	ERR_TYPE(request_param, "request_param", "table")
 
 	local endpoint
 	if request_param.recursive then
@@ -218,7 +223,7 @@ end
 	```
 ]=]
 function Rester.base64Decode(data: string)
-	assert(type(data) == "string", "`endpoint` must be a string")
+	ERR_TYPE(data, "data", "string")
 
 	local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
@@ -252,8 +257,8 @@ end
 	```
 ]=]
 function Rester.request(endpoint: string, request_param: RequestParameter?)
-	assert(type(endpoint) == "string", "`endpoint` must be a string")
-	assert(type(request_param) == "table", "`request_param` must be a table")
+	ERR_TYPE(endpoint, "endpoint", "string")
+	ERR_TYPE(request_param, "request_param", "table")
 
 	local method, final_path = Rester.getMethodAndPath(endpoint, request_param)
 
