@@ -47,13 +47,13 @@ local HEADERS_ALIASES = {
 local Rester = {}
 Rester.__index = Rester
 
-type ResterDir = {
+export type ResterDir = {
 	name: string,
 	path: string,
 	sha: string
 }
 
-type ResterFile = {
+export type ResterFile = {
 	content: string,
 	extension: string,
 	name: string,
@@ -61,7 +61,7 @@ type ResterFile = {
 	sha: string
 }
 
-type ContentResponse = {
+export type ContentResponse = {
 	name: string,
 	path: string,
 	sha: string,
@@ -80,7 +80,7 @@ type ContentResponse = {
 	},
 }
 
-type RequestParameter = {
+export type RequestParameter = {
 	branch: string,
 	commit_sha: string,
 	headers: { [string] : string }?,
@@ -92,16 +92,7 @@ type RequestParameter = {
 	ref: string?
 }
 
-type Blob = {
-	sha: string,
-	node_id: string,
-	size: number,
-	url: string,
-	content: string,
-	encoding: string,
-}
-
-type TreeIndex = {
+export type TreeIndex = {
 	path: string,
 	mode: string,
 	type: string,
@@ -110,14 +101,14 @@ type TreeIndex = {
 	url: string
 }
 
-type TreeData = {
+export type TreeData = {
 	sha: string,
 	url: string,
 	tree: { [number] : TreeIndex },
 	truncated: string
 }
 
-type HttpResponse = {
+export type HttpResponse = {
 	Body: string,
 	Success: boolean,
 	StatusCode: number,
