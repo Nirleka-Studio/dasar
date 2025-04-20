@@ -74,7 +74,7 @@ function Brewer.createFolder(dir: { [string] : any })
 end
 
 function Brewer.createModule(dir: { [string] : any })
-	local module_inst = Instance.new("Folder")
+	local module_inst = Instance.new("ModuleScript")
 	module_inst.Name = dir.name
 
 	module_inst:SetAttribute("path", dir.path)
