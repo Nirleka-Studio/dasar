@@ -377,13 +377,14 @@ end
 	```
 ]=]
 function CharMap:LastDelim(delimeter: string)
-	local lastSeparator = self._string:match(".*/()")
+	local escaped = delimeter:gsub("(%p)", "%%%1")
+	local lastSeparator = self._string:match(".*" .. escaped .. "()")
 
-		if lastSeparator then
-			return CharMap.new(self._string:sub(lastSeparator))
-		else
-			return self
-		end
+	if lastSeparator then
+		return CharMap.new(self._string:sub(lastSeparator))
+	else
+		return self
+	end
 end
 
 --[=[
