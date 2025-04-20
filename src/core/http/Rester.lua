@@ -47,6 +47,39 @@ local HEADERS_ALIASES = {
 local Rester = {}
 Rester.__index = Rester
 
+type ResterDir = {
+	name: string,
+	path: string,
+	sha: string
+}
+
+type ResterFile = {
+	content: string,
+	extension: string,
+	name: string,
+	path: string,
+	sha: string
+}
+
+type ContentResponse = {
+	name: string,
+	path: string,
+	sha: string,
+	size: number,
+	url: string,
+	html_url: string,
+	git_url: string,
+	download_url: string,
+	type: string,
+	content: string,
+	encoding: string,
+	_links: {
+		self: string,
+		git: string,
+		html: string
+	},
+}
+
 type RequestParameter = {
 	branch: string,
 	commit_sha: string,
@@ -92,17 +125,75 @@ type HttpResponse = {
 	Headers: { [string]: string },
 }
 
-function Rester.new()
+function Rester.new(auth: string, owner: string, repo: string)
 	return setmetatable({
-		auth = "",
-		owner = "",
-		repo = "",
-		path = ""
+		auth = auth,
+		owner = owner,
+		repo = repo
 	}, Rester)
 end
 
+--[=[
+	Validates the authentication key.
+]=]
 function Rester:ValidateAuthentication()
 	return Rester.request(ENDPOINTS.get_user)
+end
+
+function Rester:GetAllFileContentsAndDirectories(request_param: RequestParameter)
+	ERR_TYPE(request_param, "request_param", "table")
+
+	-- magic, do not touch
+	local tree: TreeData = Rester.getTree({
+		owner = self.owner,
+		repo = self.repo,
+		tree_sha = request_param.tree_sha
+	}):andThen(HttpPromise.decodeJson)
+		:catch(HttpPromise.logFailedRequests)
+		:awaitValue()
+
+	local directories = {}
+	local files = {}
+
+	for _, index: TreeIndex in pairs(tree.tree) do
+		if index.type == "tree" then
+			local new_dir: ResterDir = {}
+
+			new_dir.name = CharMap(index.path):LastDelim("/"):ToString()
+			new_dir.path = index.path
+			new_dir.sha = index.sha
+
+			table.insert(directories, new_dir)
+
+		elseif index.type == "blob" then
+			local new_file: ResterFile = {}
+
+			-- i still dont know how or why this works. dont ask me.
+			new_file.extension = string.match(CharMap(index.path):LastDelim("/"):ToString(), "%.([^%.]+)$")
+			new_file.path = index.path
+			new_file.sha = index.sha
+
+			-- another black magic.
+			local fetch_content: ContentResponse = Rester.getContent({
+				owner = self.owner,
+				repo = self.repo,
+				path = index.path
+			}):andThen(HttpPromise.decodeJson)
+			:catch(HttpPromise.logFailedRequests)
+			:awaitValue()
+
+			if fetch_content.encoding == "base64" then
+				new_file.content = Rester.base64Decode(fetch_content.content)
+			else
+				-- im not supporting anymore bullshit
+				new_file.content = fetch_content.content
+			end
+
+			table.insert(files, new_file)
+		end
+	end
+
+	return directories, files
 end
 
 --[=[
