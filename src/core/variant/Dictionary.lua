@@ -2,7 +2,6 @@
 -- NirlekaDev
 -- March 22, 2025
 
-local require = require(game:GetService("ReplicatedStorage").Modules.Dasar).Require
 local MurmurHash3 = require("../hash/hash_murmur3")
 
 local hash_murmur3_one_32 = MurmurHash3.one_32

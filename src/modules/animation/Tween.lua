@@ -11,19 +11,18 @@
 ]=]
 
 local RunService = game:GetService("RunService")
-local require = require(game:GetService("ReplicatedStorage").Modules.Dasar).Require
-local Dict = require("Dictionary")
-local Equations = require("easing_equations")
-local ErrorMacros = require("error_macros")
-local MathLib = require("math")
-local Maid = require("Maid")
+local Dict = require(game.ReplicatedStorage.src.core.variant.Dictionary)
+local Equations = require("./easing_equations")
+local assert_macros = require(game.ReplicatedStorage.src.core.error.assert_macros)
+local MathLib = require(game.ReplicatedStorage.src.core.math.math_funcs)
+local Maid = require("../thirdparty/Maid")
 
 local math = math -- for performance purposes, avoids repeated _G access.
 
-local ERR_FAIL_COND_MSG = ErrorMacros.ERR_FAIL_COND_MSG
-local ERR_THROW = ErrorMacros.ERR_THROW
-local ERR_TYPE = ErrorMacros.ERR_TYPE
-local ERR_INDEX_NIL = ErrorMacros.ERR_INDEX_NIL
+local ERR_FAIL_COND_MSG = assert_macros.ERR_FAIL_COND_MSG
+local ERR_THROW = assert_macros.ERR_THROW
+local ERR_TYPE = assert_macros.ERR_TYPE
+local ERR_INDEX_NIL = assert_macros.ERR_INDEX_NIL
 
 local ERR_MSG_OBJECT_TYPE = "'object' parameter must be either a table or Instance. Got %s"
 local ERR_MSG_PROPERTY_NIL = "Attempt to tween a nil property %s ...[%s]!"
@@ -263,7 +262,7 @@ function PropertyTweener:start()
 	end
 
 	if self.do_continue then
-		if MathLib.isZeroApprox(self.start_delay) then
+		if MathLib.aproxzero(self.start_delay) then
 			self.initial_value = get_indexed(self.target_object, self.target_property)
 		else
 			self.do_continue_delay = true
@@ -286,7 +285,7 @@ function PropertyTweener:step(delta_time: number)
 	if self.elapsed_time < self.start_delay then
 		delta_time = 0
 		return true
-	elseif self.do_continue_delay and (not MathLib.isZeroApprox(self.start_delay)) then
+	elseif self.do_continue_delay and (not MathLib.aproxzero(self.start_delay)) then
 		self.initial_value = get_indexed(self.target_object, self.target_property)
 		self.do_continue_delay = false
 	end

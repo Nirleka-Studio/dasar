@@ -8,9 +8,8 @@
 	Represents dialogue segments.
 ]=]
 
-local require = require(game:GetService("ReplicatedStorage").Modules.Dasar).Require
-local Array = require("Array")
-local CharMap = require("CharMap")
+local Array = require(game.ReplicatedStorage.src.core.variant.Array)
+local CharMap = require(game.ReplicatedStorage.src.core.variant.CharMap)
 
 local CHAR_DELAYS = {
 	[","] = 0.3,

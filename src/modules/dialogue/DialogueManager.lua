@@ -1,7 +1,5 @@
-local require = require(game:GetService("ReplicatedStorage").Modules.Dasar).Require
-
-local Tween = require("Tween")
-local DiaSegmentMap = require("DiaSegmentMap")
+local Tween = require("../animation/Tween")
+local DiaSegmentMap = require("./DiaSegmentMap")
 
 local ui = game.Players.LocalPlayer.PlayerGui:WaitForChild("Dialogue").root
 local ui_dialogue_text = ui.dialogue_backdrop.text
