@@ -1,4 +1,4 @@
-local GuiService = game:GetService("GuiService")
+local StarterGui = game:GetService("StarterGui")
 local Players = game:GetService("Players")
 
 --[=[
@@ -14,13 +14,16 @@ local Replicator = {}
 
 function Replicator._ready()
 	if not Players.CharacterAutoLoads then
-		Replicator.ReplicateAllFrom(GuiService, Players.LocalPlayer.PlayerGui)
+		Replicator.ReplicateAllFrom(StarterGui, Players.LocalPlayer.PlayerGui)
 	end
 end
 
 function Replicator.ReplicateAllFrom(from: Instance, to: Instance)
 	for _, inst in ipairs(from:GetChildren()) do
-		inst:Clone().parent = to
+		print(inst)
+		local inst_clone = inst:Clone()
+		print(inst_clone)
+		inst_clone.Parent = to
 	end
 end
 

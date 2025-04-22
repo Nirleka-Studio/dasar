@@ -1,3 +1,5 @@
+local Promise = require("../modules/thirdparty/Promise")
+
 --[=[
 	@class Loader
 
@@ -39,17 +41,32 @@ type PredicateFn = (module: ModuleScript) -> boolean
 	```
 ]=]
 function Loader.LoadChildren(parent: Instance, predicate: PredicateFn?): { [string]: any }
-	local modules: { [string]: any } = {}
-	for _, child in parent:GetChildren() do
-		if child:IsA("ModuleScript") then
-			if predicate and not predicate(child) then
-				continue
+	return Promise.new(function(resolve, _reject)
+		local modules: { [string]: any } = {}
+		local promises = {}
+
+		for _, child in parent:GetChildren() do
+			if child:IsA("ModuleScript") then
+				if predicate and not predicate(child) then
+					continue
+				end
+
+				local promise = Promise.try(function()
+					return require(child)
+				end):andThen(function(m)
+					modules[child.Name] = m
+				end):catch(function(_err)
+					-- Ignore errors silently or log them if needed
+				end)
+
+				table.insert(promises, promise)
 			end
-			local m = require(child)
-			modules[child.Name] = m
 		end
-	end
-	return modules
+
+		Promise.all(promises):andThen(function()
+			resolve(modules)
+		end)
+	end)
 end
 
 --[=[
@@ -70,32 +87,32 @@ end
 	```
 ]=]
 function Loader.LoadDescendants(parent: Instance, predicate: PredicateFn?): { [string]: any }
-	local modules: { [string]: any } = {}
-	for _, descendant in parent:GetDescendants() do
-		if descendant:IsA("ModuleScript") then
-			if predicate and not predicate(descendant) then
-				continue
+	return Promise.new(function(resolve, _reject)
+		local modules: { [string]: any } = {}
+		local promises = {}
+
+		for _, child in parent:GetDescendants() do
+			if child:IsA("ModuleScript") then
+				if predicate and not predicate(child) then
+					continue
+				end
+
+				local promise = Promise.try(function()
+					return require(child)
+				end):andThen(function(m)
+					modules[child.Name] = m
+				end):catch(function(_err)
+					-- Ignore errors silently or log them if needed
+				end)
+
+				table.insert(promises, promise)
 			end
-			local m = require(descendant)
-			modules[descendant.Name] = m
 		end
-	end
-	return modules
-end
 
---[=[
-	A commonly-used predicate in the `LoadChildren` and `LoadDescendants`
-	functions is one to match names. Therefore, the `MatchesName` utility
-	function provides a quick way to create such predicates.
-
-	```lua
-	Loader.LoadDescendants(ReplicatedStorage.MyModules, Loader.MatchesName("Service$"))
-	```
-]=]
-function Loader.MatchesName(matchName: string): (module: ModuleScript) -> boolean
-	return function(moduleScript: ModuleScript): boolean
-		return moduleScript.Name:match(matchName) ~= nil
-	end
+		Promise.all(promises):andThen(function()
+			resolve(modules)
+		end)
+	end)
 end
 
 --[=[
@@ -124,12 +141,39 @@ function Loader.SpawnAll(loadedModules: { [string]: any }, methodName: string)
 	for name, mod in loadedModules do
 		local method = mod[methodName]
 		if type(method) == "function" then
+			print(mod)
 			task.spawn(function()
 				debug.setmemorycategory(name)
 				method(mod)
 			end)
 		end
 	end
+end
+
+function Loader.LoadAndSpawnDescendants(parent: Instance, methodName: string, predicate: PredicateFn?)
+	return Promise.new(function()
+		for _, child in parent:GetDescendants() do
+			if child:IsA("ModuleScript") then
+				if predicate and not predicate(child) then
+					continue
+				end
+
+				Promise.try(function()
+					return require(child)
+				end):andThen(function(mod)
+					local method = mod[methodName]
+					if type(method) == "function" then
+						task.spawn(function()
+							debug.setmemorycategory(child.Name)
+							method(mod)
+						end)
+					end
+				end):catch(function(err)
+					-- Optionally log or ignore
+				end)
+			end
+		end
+	end)
 end
 
 --[=[
