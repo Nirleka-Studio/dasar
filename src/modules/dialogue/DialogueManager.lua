@@ -1,0 +1,88 @@
+local Tween = require("../animation/Tween")
+local DiaSegmentMap = require("./DiaSegmentMap")
+
+local ui = game.Players.LocalPlayer.PlayerGui:WaitForChild("Dialogue").root
+local ui_dialogue_text = ui.dialogue_backdrop.text
+local ui_dialogue_backdrop = ui.dialogue_backdrop
+
+local tweens_ui_dialogue = Tween.new()
+	:SetTrans(Tween["ENUM_TRANSITION_TYPES"]["TRANS_CUBIC"])
+	:SetEase(Tween["ENUM_EASING_TYPES"]["EASE_IN_OUT"])
+
+local function create_tween(current_tween, trans_type, ease_type)
+	if current_tween then
+		trans_type = current_tween:GetTrans()
+		ease_type = current_tween:GetEase()
+		current_tween:Kill()
+		current_tween = nil
+	end
+
+	--current_tween:Destroy()
+
+	current_tween = Tween.new():SetTrans(trans_type):SetEase(ease_type)
+	return current_tween
+end
+
+local DialogueManager = {}
+
+function DialogueManager.HideDialogue()
+	local tween = create_tween(tweens_ui_dialogue):SetParallel(true)
+	tween:TweenProperty(ui_dialogue_text, "TextTransparency", 1, 1)
+	tween:TweenProperty(ui_dialogue_backdrop, "Transparency", 1, 1)
+end
+
+function DialogueManager.ShowDialogue()
+	local tween = create_tween(tweens_ui_dialogue):SetParallel(true)
+	tween:TweenProperty(ui_dialogue_text, "TextTransparency", 0, 1)
+	tween:TweenProperty(ui_dialogue_backdrop, "Transparency", 0, 1)
+end
+
+function DialogueManager.StepText(text: string, config: any?)
+	return DiaSegmentMap.StepAndRender(text, ui_dialogue_text, config)
+end
+
+function DialogueManager.ShowText_ForDuration(activeText, showDuration)
+	DialogueManager.ShowText_Forever(activeText)
+	task.wait(showDuration)
+	DialogueManager.HideDialogue()
+end
+
+function DialogueManager.ShowText_Forever(activeText)
+	DialogueManager.ShowDialogue()
+	ui_dialogue_text.Text = activeText
+	DialogueManager.StepText(activeText)
+end
+
+function DialogueManager.PlaySequence(sequenceText)
+	local dialogues = string.split(sequenceText, "\n")
+
+	for _, dialogue in ipairs(dialogues) do
+		--dialogue = cleanText(dialogue)
+
+		if dialogue == "" then
+			continue
+		end
+
+		local waitTime, text = dialogue:match("([%d%.]+)%s+(.+)$")
+
+		if waitTime and text then
+			waitTime = tonumber(waitTime)
+			local duration, actualText = text:match("@([%d%.]+)%s+(.+)$")
+
+			if duration then
+				duration = tonumber(duration)
+				actualText = actualText --cleanText(actualText)
+				task.wait(waitTime)
+				DialogueManager.ShowText_ForDuration(actualText, duration)
+			else
+				text = text --cleanText(text)
+				task.wait(waitTime)
+				DialogueManager.ShowText_Forever(text)
+			end
+		else
+			DialogueManager.ShowText_Forever(dialogue)--cleanText(dialogue))
+		end
+	end
+end
+
+return DialogueManager
