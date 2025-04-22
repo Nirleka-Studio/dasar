@@ -20,9 +20,7 @@ end
 
 function Replicator.ReplicateAllFrom(from: Instance, to: Instance)
 	for _, inst in ipairs(from:GetChildren()) do
-		print(inst)
 		local inst_clone = inst:Clone()
-		print(inst_clone)
 		inst_clone.Parent = to
 	end
 end
