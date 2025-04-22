@@ -41,7 +41,7 @@ end
 --[=[
 	Throws an error if the index of the table is nil.
 ]=]
-function ass_mac.ERR_NIL_INDEX(index: any, t: table)
+function ass_mac.ERR_NIL_INDEX(t: table, index: any)
 	if t[index] == nil then
 		error(format("t[ %s ] is nil", index))
 	end
