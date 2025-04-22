@@ -10,8 +10,8 @@ function lib.lerp(a, b, t)
 	return a + (b - a) * t
 end
 
-function lib.aproxzero(a, b)
-	return math.abs(a - b) < EPSILON
+function lib.aproxzero(n)
+	return math.abs(n) < EPSILON
 end
 
 return lib
