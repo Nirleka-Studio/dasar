@@ -41,4 +41,48 @@ function DialogueManager.StepText(text: string, config: any?)
 	return DiaSegmentMap.StepAndRender(text, ui_dialogue_text, config)
 end
 
+function DialogueManager.ShowText_ForDuration(activeText, showDuration)
+	DialogueManager.ShowText_Forever(activeText)
+	task.wait(showDuration)
+	DialogueManager.HideDialogue()
+end
+
+function DialogueManager.ShowText_Forever(activeText)
+	DialogueManager.ShowDialogue()
+	ui_dialogue_text.Text = activeText
+	DialogueManager.StepText(activeText)
+end
+
+function DialogueManager.PlaySequence(sequenceText)
+	local dialogues = string.split(sequenceText, "\n")
+
+	for _, dialogue in ipairs(dialogues) do
+		--dialogue = cleanText(dialogue)
+
+		if dialogue == "" then
+			continue
+		end
+
+		local waitTime, text = dialogue:match("([%d%.]+)%s+(.+)$")
+
+		if waitTime and text then
+			waitTime = tonumber(waitTime)
+			local duration, actualText = text:match("@([%d%.]+)%s+(.+)$")
+
+			if duration then
+				duration = tonumber(duration)
+				actualText = actualText --cleanText(actualText)
+				task.wait(waitTime)
+				DialogueManager.ShowText_ForDuration(actualText, duration)
+			else
+				text = text --cleanText(text)
+				task.wait(waitTime)
+				DialogueManager.ShowText_Forever(text)
+			end
+		else
+			DialogueManager.ShowText_Forever(dialogue)--cleanText(dialogue))
+		end
+	end
+end
+
 return DialogueManager
