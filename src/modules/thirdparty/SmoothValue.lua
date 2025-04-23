@@ -8,7 +8,7 @@
 local SmoothValue = {}
 
 SmoothValue.__index = SmoothValue
-local SmoothDamp = require(script.SmoothDamp)
+local SmoothDamp = require("./SmoothDamp")
 
 function SmoothValue.new(vec3, smoothTime)
 	assert(typeof(vec3) == "Vector3", "initialValue should be Vector3")

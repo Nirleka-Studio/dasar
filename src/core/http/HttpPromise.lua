@@ -1,6 +1,6 @@
 local HttpService = game:GetService("HttpService")
 
-local Promise = require(game:GetService("ReplicatedStorage").src.modules.thirdparty.Promise)
+local Promise = require("../../src/modules/thirdparty/Promise")
 
 local DEBUG_REQUEST = false
 local DEBUG_RESPONSE = false

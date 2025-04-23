@@ -8,8 +8,8 @@
 	Represents dialogue segments.
 ]=]
 
-local Array = require(game.ReplicatedStorage.src.core.variant.Array)
-local CharMap = require(game.ReplicatedStorage.src.core.variant.CharMap)
+local Array = require("../../src/core/variant/Array")
+local CharMap = require("../../src/core/variant/CharMap")
 
 local CHAR_DELAYS = {
 	[","] = 0.3,
