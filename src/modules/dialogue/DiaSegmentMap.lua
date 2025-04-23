@@ -8,14 +8,15 @@
 	Represents dialogue segments.
 ]=]
 
-local Array = require("../../src/core/variant/Array")
-local CharMap = require("../../src/core/variant/CharMap")
+local Array = require("../../../src/core/variant/Array")
+local CharMap = require("../../../src/core/variant/CharMap")
 
 local CHAR_DELAYS = {
 	[","] = 0.3,
 	["."] = 0.8,
 	["!"] = 0.9,
-	["|"] = 1.0
+	["|"] = 1.0,
+	["?"] = 0.3
 }
 
 local FORMAT_TO_REMOVE = {
