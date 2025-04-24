@@ -1,9 +1,15 @@
-local Tween = require("../animation/Tween")
-local DiaSegmentMap = require("./DiaSegmentMap")
+-- DialogueManager.lua
+-- NirlekaDev
+-- April 24, 2025
 
-local ui = game.Players.LocalPlayer.PlayerGui:WaitForChild("Dialogue").root
-local ui_dialogue_text = ui.dialogue_backdrop.text
-local ui_dialogue_backdrop = ui.dialogue_backdrop
+local Players = game:GetService("Players")
+
+local Tween = require("../animation/Tween")
+local Dialogue = require("./Dialogue")
+
+local ui = Players.LocalPlayer.PlayerGui:WaitForChild("Dialogue").root
+local ui_dialogue_text: TextLabel = ui.dialogue_backdrop.text
+local ui_dialogue_backdrop: Frame = ui.dialogue_backdrop
 
 local tweens_ui_dialogue = Tween.new()
 	:SetTrans(Tween["ENUM_TRANSITION_TYPES"]["TRANS_CUBIC"])
@@ -37,8 +43,8 @@ function DialogueManager.ShowDialogue()
 	tween:TweenProperty(ui_dialogue_backdrop, "Transparency", 0, 1)
 end
 
-function DialogueManager.StepText(text: string, config: any?)
-	return DiaSegmentMap.StepAndRender(text, ui_dialogue_text, config)
+function DialogueManager.StepText(text: string, config: Dialogue.DiaConfig?)
+	return Dialogue(text, ui_dialogue_text, config)
 end
 
 function DialogueManager.ShowText_ForDuration(activeText, showDuration)
