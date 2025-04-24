@@ -1,6 +1,6 @@
--- DiaSegmentMap.lua
+-- Dialogue.lua
 -- NirlekaDev
--- March 30, 2025 // Idul Fitr!!
+-- April 25, 2025
 
 local CHAR_DELAYS = {
 	[","] = 0.3,
