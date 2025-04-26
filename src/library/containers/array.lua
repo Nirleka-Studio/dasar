@@ -8,6 +8,11 @@ local table = table
 local clear = table.clear
 local find = table.find
 local remove = table.remove
+local math = math
+local floor = math.floor
+local string = string
+local format = string.format
+local typeof = typeof
 
 --[=[
 	@class array
@@ -56,7 +61,8 @@ function array.clear(arr: Array)
 
 	-- but oh well. we need you anyway.
 	clear(arr._data)
-	arr._size_updt = true
+	arr._size = 0
+	arr._size_updt = false
 end
 
 --[=[
@@ -73,7 +79,7 @@ function array.erase(arr: Array, value: any)
 		return
 	end
 
-	remove(arr, index)
+	remove(arr._data, index)
 	arr._size_updt = true
 end
 
@@ -146,12 +152,12 @@ function array.set(arr: Array, index: number, value: any)
 	end
 
 	if type(index) ~= "number" then
-		error(string.format("Cannot index Array with type %s", typeof(index)), 4)
+		error(format("Cannot index Array with type %s", typeof(index)), 4)
 	end
 
 	local size = array.size(arr)
 
-	if index ~= math.floor(index) then
+	if index ~= floor(index) then
 		error("Array indices must be integers", 4)
 	end
 
@@ -165,23 +171,20 @@ function array.set(arr: Array, index: number, value: any)
 		return
 	end
 
+	if index > size then
+		arr._size += 1
+		arr._size_updt = false
+	end
+
 	arr._data[index] = value
-	arr._size_updt = true
 end
 
 --[=[
 	@within array
 	Returns the size of the array.
 	Sizes of arrays and cached in the `_size` field.
-	When the array is modified, `_size_updt` is set to true.
-	When `_size_updt` is true, the size of the array is recalculated.
 ]=]
 function array.size(arr: Array): number
-	if arr._size_updt then
-		arr._size = #arr._data
-		arr._size_updt = false
-	end
-
 	return arr._size
 end
 
