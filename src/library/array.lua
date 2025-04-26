@@ -2,6 +2,13 @@
 -- NirlekaDev
 -- April 26, 2025
 
+local error = error
+local type = type
+local table = table
+local clear = table.clear
+local find = table.find
+local remove = table.remove
+
 --[=[
 	@class array
 ]=]
@@ -48,7 +55,7 @@ function array.clear(arr: Array)
 	end
 
 	-- but oh well. we need you anyway.
-	table.clear(arr._data)
+	clear(arr._data)
 	arr._size_updt = true
 end
 
@@ -66,7 +73,7 @@ function array.erase(arr: Array, value: any)
 		return
 	end
 
-	table.remove(arr, index)
+	remove(arr, index)
 	arr._size_updt = true
 end
 
@@ -75,7 +82,7 @@ end
 	Returns the index of the first occurence of `value`
 ]=]
 function array.find(arr: Array, value: any, from: number?): number?
-	return table.find(arr._data, value, from)
+	return find(arr._data, value, from)
 end
 
 --[=[
@@ -126,7 +133,7 @@ function array.remove_at(arr: Array, index: number)
 		error("Cannot modify a readonly Array", 4)
 	end
 	arr._size_updt = true
-	return table.remove(arr._data, index)
+	return remove(arr._data, index)
 end
 
 --[=[
@@ -153,7 +160,7 @@ function array.set(arr: Array, index: number, value: any)
 	end
 
 	if value == nil then
-		table.remove(arr._data, index)
+		remove(arr._data, index)
 		arr._size_updt = true
 		return
 	end
