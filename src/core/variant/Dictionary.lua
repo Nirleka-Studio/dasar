@@ -44,7 +44,7 @@ function Dictionary._new(value)
 	return Dictionary.toDictionary(value)
 end
 
-function Dictionary.fromTable(from: {})
+function Dictionary.fromTable(from: {any})
 	local dict_copy = Dictionary.new()
 
 	for i, v in pairs(from) do
@@ -52,6 +52,14 @@ function Dictionary.fromTable(from: {})
 	end
 
 	return dict_copy
+end
+
+function Dictionary.ref(from: {any})
+	local dict = Dictionary.new()
+
+	dict._data = from
+
+	return dict
 end
 
 function Dictionary:__index(index)
@@ -161,6 +169,8 @@ function Dictionary:Duplicate(deep: boolean)
 			end
 		end
 	end
+
+	return new_dict
 end
 
 function Dictionary:Erase(key: any)

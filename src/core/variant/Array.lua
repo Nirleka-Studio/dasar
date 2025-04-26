@@ -79,6 +79,12 @@ function Array.fromTable(from: { [number]: any })
 	return newArray
 end
 
+function Array.ref(from: { [number]: any })
+	local newArray = Array.new()
+	newArray._data = from
+	return newArray
+end
+
 function Array:__index(index)
 	index = neg_index(index, self._data)
 
@@ -200,6 +206,8 @@ function Array:Duplicate(deep: boolean)
 			end
 		end
 	end
+
+	return new_arr
 end
 
 function Array:Erase(value: any)
@@ -275,11 +283,15 @@ function Array:Set(index: number, value: any)
 		error(string.format("Cannot index Array with type %s!", typeof(index)), 4)
 	end
 
+	if index ~= math.floor(index) then
+		error("Array indices must be integers!", 4)
+	end
+
 	if index > (self:Size() + 1) then
 		error("Index is out of bounds!", 4)
 	end
 
-	if type(value) == "nil" then
+	if value == nil then
 		table.remove(self._data, index)
 		self._hash_need_update = true
 		return
