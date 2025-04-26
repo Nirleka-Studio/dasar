@@ -10,6 +10,8 @@ local CHAR_DELAYS = {
 	["?"] = 0.3
 }
 
+local CHAR_SOUND_EXCEPTIONS = "'?!,."
+
 local FORMAT_TO_REMOVE = {
 	["_"] = true,
 	["|"] = true
@@ -240,10 +242,16 @@ local function dialogueStepAndRender(text: string, label: TextLabel, p_config: D
 					break
 				end
 
-				if not char.soundPlayed then
-					playSound(config.sound)
-					char.soundPlayed = true
+				if char.soundPlayed then
+					continue
 				end
+
+				if string.find(CHAR_SOUND_EXCEPTIONS, char.char) then
+					continue
+				end
+
+				playSound(config.sound)
+				char.soundPlayed = true
 			end
 
 			task.wait()
