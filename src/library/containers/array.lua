@@ -22,13 +22,13 @@ local array = {}
 --[=[
 	@within array
 ]=]
-export type Data = { [number] : any }
+export type Data<K> = { [number] : any }
 
 --[=[
 	@within array
 ]=]
-export type Array = {
-	_data: { [number] : any },
+export type Array<K> = {
+	_data: Data<K>,
 	_readonly: boolean,
 	_size: number,
 	_size_updt: boolean
@@ -38,7 +38,7 @@ export type Array = {
 	@within array
 	Returns a new array.
 ]=]
-function array.create(from: Data?)
+function array.create(from: Data<any>?)
 	local new_array: Array = {
 		_data = from or {},
 		_readonly = false,
