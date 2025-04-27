@@ -19,7 +19,7 @@ export type UString = {
 function ustring.create(str: string): UString
 	local new_ustring: UString = {
 		_string = str or "",
-		_size = str and str or 0
+		_size = str and #str or 0
 	}
 
 	return new_ustring
