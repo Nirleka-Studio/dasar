@@ -5,7 +5,7 @@
 local array = require("../containers/array")
 
 export type CharMap = {
-	_map: array.Array,
+	_map: array.Array<string>,
 	_size: number
 }
 
@@ -25,7 +25,7 @@ function charmap.at(charmap: CharMap, index: number): string?
 end
 
 function charmap.concat(from: CharMap, to: CharMap): CharMap
-	local concatenated: array.Array = array.concat_array(to._map, from._map)
+	local concatenated: array.Array<string> = array.concat_array(to._map, from._map)
 	local new_charmap: CharMap = {
 		_map = concatenated,
 		_size = array.size(concatenated)
