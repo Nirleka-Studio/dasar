@@ -29,9 +29,7 @@ export type Data<K> = { [number] : any }
 ]=]
 export type Array<K> = {
 	_data: Data<K>,
-	_readonly: boolean,
-	_size: number,
-	_size_updt: boolean
+	_readonly: boolean
 }
 
 --[=[
@@ -39,11 +37,9 @@ export type Array<K> = {
 	Returns a new array.
 ]=]
 function array.create(from: Data<any>?)
-	local new_array: Array = {
+	local new_array: Array<any> = {
 		_data = from or {},
-		_readonly = false,
-		_size = 0,
-		_size_updt = true
+		_readonly = false
 	}
 
 	return new_array
@@ -53,7 +49,7 @@ end
 	@within array
 	Adds the elements of from `fruits` to the end of `basket`
 ]=]
-function array.append_array(basket: Array, fruits: Array)
+function array.append_array(basket: Array<any>, fruits: Array<any>)
 	for _, fruit in ipairs(fruits._data) do
 		array.push_back(basket, fruit)
 	end
@@ -63,8 +59,8 @@ end
 	@within array
 	Returns a new array with the elements of `fruits` on the end of `basket`
 ]=]
-function array.concat_array(basket: Array, fruits: Array): Array
-	local new_basket: Array = array.duplicate(basket)
+function array.concat_array(basket: Array<any>, fruits: Array<any>): Array<any>
+	local new_basket: Array<any> = array.duplicate(basket)
 
 	for _, fruit in ipairs(fruits._data) do
 		array.push_back(new_basket, fruit)
@@ -77,7 +73,7 @@ end
 	@within array
 	Removes all element from the array.
 ]=]
-function array.clear(arr: Array)
+function array.clear(arr: Array<any>)
 	-- no... ive broken the code... every checks shall be in .set() goddamit!!!
 	if arr._readonly then
 		error("Cannot modify a readonly Array", 4)
@@ -85,15 +81,13 @@ function array.clear(arr: Array)
 
 	-- but oh well. we need you anyway.
 	clear(arr._data)
-	arr._size = 0
-	arr._size_updt = false
 end
 
 --[=[
 	@within array
 	Removes the first occurence of index assosicated with `value`
 ]=]
-function array.erase(arr: Array, value: any)
+function array.erase(arr: Array<any>, value: any)
 	if arr._readonly then
 		error("Cannot modify a readonly Array", 4)
 	end
@@ -104,14 +98,13 @@ function array.erase(arr: Array, value: any)
 	end
 
 	remove(arr._data, index)
-	arr._size_updt = true
 end
 
 --[=[
 	@within array
 	Returns a shallow copy of `arr`
 ]=]
-function array.duplicate(arr: Array): Array
+function array.duplicate(arr: Array<any>): Array<any>
 	return array.create(table.clone(arr._data))
 end
 
@@ -119,7 +112,7 @@ end
 	@within array
 	Returns the index of the first occurence of `value`
 ]=]
-function array.find(arr: Array, value: any, from: number?): number?
+function array.find(arr: Array<any>, value: any, from: number?): number?
 	return find(arr._data, value, from)
 end
 
@@ -128,7 +121,7 @@ end
 	Returns the value of `index`
 	Shorthand for array._data[index]
 ]=]
-function array.get(arr: Array, index: number): any
+function array.get(arr: Array<any>, index: number): any
 	return arr._data[index]
 end
 
@@ -136,7 +129,7 @@ end
 	@within array
 	Returns true if the array contains `value`
 ]=]
-function array.has(arr: Array, value: any): boolean
+function array.has(arr: Array<any>, value: any): boolean
 	return array.find(arr, value) ~= nil
 end
 
@@ -144,21 +137,20 @@ end
 	@within array
 	Returns true if the array is empty, meaning no entries.
 ]=]
-function array.is_empty(arr: Array): boolean
-	return array.size(arr) == 0
+function array.is_empty(arr: Array<any>): boolean
+	return #arr._data == 0
 end
 
 --[=[
 	@within array
 	Inserts a new index with `value` at the end of the array.
 ]=]
-function array.push_back(arr: Array, value: any)
+function array.push_back(arr: Array<any>, value: any)
 	if arr._readonly then
 		error("Cannot modify a readonly Array", 4)
 	end
 
-	arr._data[ array.size(arr) + 1 ] = value
-	arr._size_updt = true
+	arr._data[ #arr._data + 1 ] = value
 end
 
 --[=[
@@ -166,11 +158,11 @@ end
 	Removes an existing index from the array.
 	Maintains the order of the array.
 ]=]
-function array.remove_at(arr: Array, index: number)
+function array.remove_at(arr: Array<any>, index: number)
 	if arr._readonly then
 		error("Cannot modify a readonly Array", 4)
 	end
-	arr._size_updt = true
+
 	return remove(arr._data, index)
 end
 
@@ -178,7 +170,7 @@ end
 	@within array
 	Sets the value of `index` to `value`
 ]=]
-function array.set(arr: Array, index: number, value: any)
+function array.set(arr: Array<any>, index: number, value: any)
 	if arr._readonly then
 		error("Cannot modify a readonly Array", 4)
 	end
@@ -187,7 +179,7 @@ function array.set(arr: Array, index: number, value: any)
 		error(format("Cannot index Array with type %s", typeof(index)), 4)
 	end
 
-	local size = array.size(arr)
+	local size = #arr._data
 
 	if index ~= floor(index) then
 		error("Array indices must be integers", 4)
@@ -199,13 +191,7 @@ function array.set(arr: Array, index: number, value: any)
 
 	if value == nil then
 		remove(arr._data, index)
-		arr._size_updt = true
 		return
-	end
-
-	if index > size then
-		arr._size += 1
-		arr._size_updt = false
 	end
 
 	arr._data[index] = value
@@ -216,8 +202,8 @@ end
 	Returns the size of the array.
 	Sizes of arrays and cached in the `_size` field.
 ]=]
-function array.size(arr: Array): number
-	return arr._size
+function array.size(arr: Array<any>): number
+	return #arr._data
 end
 
 return array
