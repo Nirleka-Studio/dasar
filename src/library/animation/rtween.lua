@@ -175,6 +175,10 @@ function rtween.kill(rtween_inst: RTween)
 	rtween_inst.is_paused = false
 end
 
+function rtween.parallel(rtween_inst: RTween)
+	rtween_inst.parallel_enabled = true
+end
+
 function rtween.pause(rtween_inst: RTween)
 	rtween_inst.is_paused = true
 
@@ -182,6 +186,11 @@ function rtween.pause(rtween_inst: RTween)
 	for k, tween in ipairs(tweens) do
 		tween:Pause()
 	end
+end
+
+function rtween.set_parallel(rtween_inst: RTween, parallel: boolean)
+	rtween_inst.default_parallel = true
+	rtween_inst.parallel_enabled = true
 end
 
 function rtween.tween_instance(
