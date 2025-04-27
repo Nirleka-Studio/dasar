@@ -51,6 +51,30 @@ end
 
 --[=[
 	@within array
+	Adds the elements of from `fruits` to the end of `basket`
+]=]
+function array.append_array(basket: Array, fruits: Array)
+	for _, fruit in ipairs(fruits._data) do
+		array.push_back(basket, fruit)
+	end
+end
+
+--[=[
+	@within array
+	Returns a new array with the elements of `fruits` on the end of `basket`
+]=]
+function array.concat_array(basket: Array, fruits: Array): Array
+	local new_basket: Array = array.duplicate(basket)
+
+	for _, fruit in ipairs(fruits._data) do
+		array.push_back(new_basket, fruit)
+	end
+
+	return new_basket
+end
+
+--[=[
+	@within array
 	Removes all element from the array.
 ]=]
 function array.clear(arr: Array)
@@ -81,6 +105,14 @@ function array.erase(arr: Array, value: any)
 
 	remove(arr._data, index)
 	arr._size_updt = true
+end
+
+--[=[
+	@within array
+	Returns a shallow copy of `arr`
+]=]
+function array.duplicate(arr: Array): Array
+	return array.create(table.clone(arr._data))
 end
 
 --[=[
