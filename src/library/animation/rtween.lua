@@ -114,42 +114,43 @@ function rtween.play(rtween_inst: RTween)
 
 	-- to prevent yielding, run it in another thread
 	task.spawn(function()
-		local function play_step(step_index)
-			if step_index > #rtween_inst.stack then
-				-- all steps completed
-				rtween_inst.current_step = 1
-				rtween_inst.is_playing = false
-				return
-			end
-
-			rtween_inst.current_step = step_index
-			rtween_inst.is_playing = true
-
-			local step = rtween_inst.stack[step_index]
-			local step_size = #step
-			local completed_tweens = 0
-
-			for _, tween in ipairs(step) do
-				tween:Play()
-
-				local connection
-				connection = tween.Completed:Connect(function()
-					completed_tweens += 1
-					if completed_tweens == step_size then
-						-- all tweens in this step are done
-						if connection then
-							connection:Disconnect()
-						end
-						play_step(step_index + 1) -- move to next step
-					end
-				end)
-
-				array.push_back(rtween_inst.connections, connection)
-			end
-		end
-
-		play_step(rtween_inst.is_paused and rtween_inst.current_step or 1)
+		rtween.play_step(rtween_inst, rtween_inst.is_paused and rtween_inst.current_step or 1)
 	end)
+end
+
+function rtween.play_step(rtween_inst: RTween, step_index: number)
+	if step_index > #rtween_inst.stack then
+		-- all steps completed
+		rtween_inst.current_step = 1
+		rtween_inst.is_playing = false
+		return
+	end
+
+	rtween_inst.current_step = step_index
+	rtween_inst.is_playing = true
+
+	local step = rtween_inst.stack[step_index]
+	local step_size = #step
+	local completed_tweens = 0
+
+	for _, tween in ipairs(step) do
+		tween:Play()
+
+		local connection
+		connection = tween.Completed:Connect(function()
+			completed_tweens += 1
+			if completed_tweens == step_size then
+				-- all tweens in this step are done
+				if connection then
+					connection:Disconnect()
+				end
+
+				rtween.play_step(rtween_inst, step_index + 1) -- move to next step
+			end
+		end)
+
+		array.push_back(rtween_inst.connections, connection)
+	end
 end
 
 function rtween.kill(rtween_inst: RTween)
