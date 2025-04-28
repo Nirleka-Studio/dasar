@@ -143,6 +143,36 @@ end
 
 --[=[
 	@within array
+	Returns true if the array's `_readonly` is true.
+]=]
+function array.is_readonly(arr: Array<any>): boolean
+	return arr._readonly
+end
+
+--[=[
+	@within array
+	Returns an interator function to iterate over the array.
+]=]
+function array.iter(arr: Array<any>)
+	local i = 0
+	return function()
+		i = i + 1
+		if i <= #arr._data then
+			return i, arr._data[i]
+		end
+	end
+end
+
+--[=[
+	@within array
+	Makes the array read-only.
+]=]
+function arrray.make_readonly(arr: Array<any>)
+	arr._readonly = true
+end
+
+--[=[
+	@within array
 	Inserts a new index with `value` at the end of the array.
 ]=]
 function array.push_back(arr: Array<any>, value: any)
