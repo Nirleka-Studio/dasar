@@ -84,7 +84,7 @@ local function play_step(rtween_inst: RTween, step_index: number)
 		tween:Play()
 
 		local connection
-		connection = tween.Completed:Connect(function()
+		connection = tween.Completed:Once(function()
 			completed_tweens += 1
 			if completed_tweens == step_size then
 				-- all tweens in this step are done
@@ -146,21 +146,22 @@ function rtween.play(rtween_inst: RTween)
 end
 
 function rtween.kill(rtween_inst: RTween)
-	for k, tween in ipairs(rtween_inst.tweens) do
+	for k, tween in array.iter(rtween_inst.tweens) do
 		tween:Cancel()
 		tween:Destroy()
-		rtween_inst.tweens[k] = nil
+		array.set(rtween_inst.tweens, k, nil)
 	end
 
-	for i, step in ipairs(rtween_inst.stack) do
-		for j, _ in ipairs(step) do
-			step[j] = nil
+	for i, step in array.iter(rtween_inst.stack) do
+		for j, _ in array.iter(step) do
+			array.set(step, j , nil)
 		end
-		rtween_inst.stack[i] = nil
+		array.set(rtween_inst.stack, i , nil)
 	end
 
-	for _, connection: RBXScriptConnection in array.iter(rtween_inst.connections) do
+	for k, connection: RBXScriptConnection in array.iter(rtween_inst.connections) do
 		connection:Disconnect()
+		array.set(rtween_inst.connections, i , nil)
 	end
 
 	rtween_inst.current_step = 1
@@ -176,7 +177,7 @@ function rtween.pause(rtween_inst: RTween)
 	rtween_inst.is_paused = true
 
 	local tweens = rtween_inst.tweens
-	for k, tween in ipairs(tweens) do
+	for k, tween in array.iter(tweens) do
 		tween:Pause()
 	end
 end
