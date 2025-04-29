@@ -29,6 +29,16 @@ export type Array<T> = {
 
 --[=[
 	@within array
+]=]
+type MapperFn = (value: any) -> any
+
+--[=[
+	@within array
+]=]
+type PredicateFn = (value: any) -> boolean
+
+--[=[
+	@within array
 	Returns a new array.
 ]=]
 function array.create(from: { [number]: any }?)
@@ -166,6 +176,25 @@ end
 ]=]
 function array.make_readonly(arr: Array<any>)
 	arr._readonly = true
+end
+
+--[=[
+	@within array
+	Iterates through the array and assigns each entry to
+	what is returned by the `fn` function.
+]=]
+function array.map(arr: Array<any>, fn: MapperFn)
+	if arr._readonly then
+		error("Cannot modify a readonly Array", 4)
+	end
+
+	for k, v in ipairs(arr._data) do
+		-- if some dumbass returns nil here, there will be a gap in the array
+		-- which can fuck things up. As they say, never remove an entry while iterating!!
+		-- now, i highly doubt my UNPAID CONTRACTORS WITH _STANDARDS_
+		-- will do this, but some retards do.
+		arr._data[k] = fn(v)
+	end
 end
 
 --[=[
