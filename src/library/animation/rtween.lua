@@ -41,19 +41,20 @@ local function append_tweens(rtween_inst: RTween, tweens_arr: array.Array<Tween>
 	local tweens = rtween_inst.tweens
 	local current_step_index = 0
 
+	local stack_size = array.size(stack)
 	if rtween_inst.parallel_enabled then
-		current_step_index = math.max(1, #stack)
+		current_step_index = math.max(1, stack_size)
 	else
-		current_step_index = #stack + 1
+		current_step_index = stack_size + 1
 	end
 
 	rtween_inst.parallel_enabled = rtween_inst.default_parallel
 
 	if not stack[current_step_index] then
-		stack[current_step_index] = array.create()
+		array.push_back(stack, array.create())
 	end
 
-	local current_step = stack[current_step_index]
+	local current_step = array.get(stack, current_step_index)
 
 	for _, tween in array.iter(tweens_arr) do
 		array.push_back(current_step, tween)
