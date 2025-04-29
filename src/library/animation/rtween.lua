@@ -21,7 +21,7 @@ local rtween = {}
 
 export type RTween = {
 	tweens: array.Array<Tween>,
-	stack: Stack,
+	stack: array.Array<Tween>,
 	connections: array.Array<RBXScriptConnection>,
 	easing_style: Enum.EasingStyle,
 	easing_direction: Enum.EasingDirection,
@@ -30,10 +30,6 @@ export type RTween = {
 	is_playing: boolean,
 	is_paused: boolean,
 	current_step: number
-}
-
-export type Stack = {
-	array.Array<Tween>
 }
 
 export type PropertyParam = {
@@ -66,7 +62,7 @@ local function append_tweens(rtween_inst: RTween, tweens_arr: array.Array<Tween>
 end
 
 local function play_step(rtween_inst: RTween, step_index: number)
-	if step_index > #rtween_inst.stack then
+	if step_index > array.size(rtween_inst.stack) then
 		-- all steps completed
 		rtween_inst.current_step = 1
 		rtween_inst.is_playing = false
@@ -92,7 +88,7 @@ local function play_step(rtween_inst: RTween, step_index: number)
 					connection:Disconnect()
 				end
 
-				rtween.play_step(rtween_inst, step_index + 1) -- move to next step
+				play_step(rtween_inst, step_index + 1) -- move to next step
 			end
 		end)
 
@@ -152,16 +148,16 @@ function rtween.kill(rtween_inst: RTween)
 		array.set(rtween_inst.tweens, k, nil)
 	end
 
-	for i, step in array.iter(rtween_inst.stack) do
+	for k, step in array.iter(rtween_inst.stack) do
 		for j, _ in array.iter(step) do
 			array.set(step, j , nil)
 		end
-		array.set(rtween_inst.stack, i , nil)
+		array.set(rtween_inst.stack, k, nil)
 	end
 
 	for k, connection: RBXScriptConnection in array.iter(rtween_inst.connections) do
 		connection:Disconnect()
-		array.set(rtween_inst.connections, i , nil)
+		array.set(rtween_inst.connections, k, nil)
 	end
 
 	rtween_inst.current_step = 1
@@ -216,7 +212,7 @@ function rtween.tween_instance(
 		array.push_back(tweens_arr, tween_inst)
 	end
 
-	rtween.append_tweens(rtween_inst, tweens_arr)
+	append_tweens(rtween_inst, tweens_arr)
 end
 
 return rtween

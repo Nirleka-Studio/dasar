@@ -20,23 +20,18 @@ local typeof = typeof
 local array = {}
 
 --[=[
-    @within array
-]=]
-export type Data<T> = { [number]: T }
-
---[=[
-    @within array
+	@within array
 ]=]
 export type Array<T> = {
-    _data: Data<T>,
-    _readonly: boolean
+	_data: { [number]: T },
+	_readonly: boolean
 }
 
 --[=[
 	@within array
 	Returns a new array.
 ]=]
-function array.create(from: Data<any>?)
+function array.create(from: { [number]: any }?)
 	local new_array: Array<any> = {
 		_data = from or {},
 		_readonly = false
@@ -153,13 +148,15 @@ end
 	@within array
 	Returns an interator function to iterate over the array.
 ]=]
-function array.iter(arr: Array<any>)
+function array.iter(arr: Array<any>): () -> (number, any)
 	local i = 0
 	return function()
 		i = i + 1
 		if i <= #arr._data then
 			return i, arr._data[i]
 		end
+
+		return
 	end
 end
 
@@ -167,7 +164,7 @@ end
 	@within array
 	Makes the array read-only.
 ]=]
-function arrray.make_readonly(arr: Array<any>)
+function array.make_readonly(arr: Array<any>)
 	arr._readonly = true
 end
 
