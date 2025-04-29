@@ -20,16 +20,16 @@ local typeof = typeof
 local array = {}
 
 --[=[
-	@within array
+    @within array
 ]=]
-export type Data<K> = { [number] : any }
+export type Data<T> = { [number]: T }
 
 --[=[
-	@within array
+    @within array
 ]=]
-export type Array<K> = {
-	_data: Data<K>,
-	_readonly: boolean
+export type Array<T> = {
+    _data: Data<T>,
+    _readonly: boolean
 }
 
 --[=[

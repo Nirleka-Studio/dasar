@@ -20,8 +20,7 @@ local array = require("../containers/array")
 local rtween = {}
 
 export type RTween = {
-	tweens: { Tween },
-	easing_config: {},
+	tweens: array.Array<Tween>,
 	stack: Stack,
 	connections: array.Array<RBXScriptConnection>,
 	easing_style: Enum.EasingStyle,
@@ -30,44 +29,18 @@ export type RTween = {
 	default_parallel: boolean,
 	is_playing: boolean,
 	is_paused: boolean,
-	current_step: number?
+	current_step: number
 }
 
 export type Stack = {
-	[number] : { Tween }
+	array.Array<Tween>
 }
 
 export type PropertyParam = {
 	[ string ] : any
 }
 
-export type TweenParam = {
-	properties: PropertyParam,
-	dur: number
-}
-
-function rtween.create(
-	easing_style: Enum.EasingStyle,
-	easing_direction: Enum.EasingDirection
-): RTween
-	local new_rtween: RTween = {
-		tweens = {},
-		stack = {},
-		easing_config = {},
-		connections = array.create(),
-		easing_style = easing_style or Enum.EasingStyle.Linear,
-		easing_direction = easing_direction or Enum.EasingDirection.InOut,
-		parallel_enabled = false,
-		default_parallel = false,
-		is_playing = false,
-		is_paused = false,
-		current_step = nil
-	}
-
-	return new_rtween
-end
-
-function rtween.append_tweens(rtween_inst: RTween, tweens_arr: { Tween })
+local function append_tweens(rtween_inst: RTween, tweens_arr: array.Array<Tween>)
 	local stack = rtween_inst.stack
 	local tweens = rtween_inst.tweens
 	local current_step_index = 0
@@ -81,44 +54,18 @@ function rtween.append_tweens(rtween_inst: RTween, tweens_arr: { Tween })
 	rtween_inst.parallel_enabled = rtween_inst.default_parallel
 
 	if not stack[current_step_index] then
-		stack[current_step_index] = {}
+		stack[current_step_index] = array.create()
 	end
 
 	local current_step = stack[current_step_index]
 
-	for _, tween in ipairs(tweens_arr) do
-		current_step[ #current_step + 1 ] = tween
-		tweens[ #tweens + 1 ] = tween
+	for _, tween in array.iter(tweens_arr) do
+		array.push_back(current_step, tween)
+		array.push_back(tweens, tween)
 	end
 end
 
-function rtween.play(rtween_inst: RTween)
-
-	-- I should probably tell you how the Stack works.
-	-- The Stack holds references to the tweens table,
-	-- The Stack contains 'steps' which itself contains the actual tweens.
-	-- In each step, all tweens inside will play at the same time.
-	-- In order to advance to the next step, all tweens in the current step
-	-- has to be completed.
-
-	if rtween_inst.is_playing and not rtween_inst.is_paused then
-		return
-	end
-
-	for k, connection in ipairs(rtween_inst.connections._data) do
-		connection:Disconnect()
-		rtween_inst.connections._data[k] = nil
-	end
-
-	rtween_inst.is_paused = false
-
-	-- to prevent yielding, run it in another thread
-	task.spawn(function()
-		rtween.play_step(rtween_inst, rtween_inst.is_paused and rtween_inst.current_step or 1)
-	end)
-end
-
-function rtween.play_step(rtween_inst: RTween, step_index: number)
+local function play_step(rtween_inst: RTween, step_index: number)
 	if step_index > #rtween_inst.stack then
 		-- all steps completed
 		rtween_inst.current_step = 1
@@ -129,15 +76,15 @@ function rtween.play_step(rtween_inst: RTween, step_index: number)
 	rtween_inst.current_step = step_index
 	rtween_inst.is_playing = true
 
-	local step = rtween_inst.stack[step_index]
+	local step = array.get(rtween_inst.stack, step_index)
 	local step_size = #step
 	local completed_tweens = 0
 
-	for _, tween in ipairs(step) do
+	for _, tween in array.iter(step) do
 		tween:Play()
 
 		local connection
-		connection = tween.Completed:Connect(function()
+		connection = tween.Completed:Once(function()
 			completed_tweens += 1
 			if completed_tweens == step_size then
 				-- all tweens in this step are done
@@ -153,22 +100,68 @@ function rtween.play_step(rtween_inst: RTween, step_index: number)
 	end
 end
 
+function rtween.create(
+	easing_style: Enum.EasingStyle,
+	easing_direction: Enum.EasingDirection
+): RTween
+	local new_rtween: RTween = {
+		tweens = array.create(),
+		stack = array.create(),
+		connections = array.create(),
+		easing_style = easing_style or Enum.EasingStyle.Linear,
+		easing_direction = easing_direction or Enum.EasingDirection.InOut,
+		parallel_enabled = false,
+		default_parallel = false,
+		is_playing = false,
+		is_paused = false,
+		current_step = 1
+	}
+
+	return new_rtween
+end
+
+function rtween.play(rtween_inst: RTween)
+
+	-- I should probably tell you how the Stack works.
+	-- The Stack holds references to the tweens table,
+	-- The Stack contains 'steps' which itself contains the actual tweens.
+	-- In each step, all tweens inside will play at the same time.
+	-- In order to advance to the next step, all tweens in the current step
+	-- has to be completed.
+
+	if rtween_inst.is_playing and not rtween_inst.is_paused then
+		return
+	end
+
+	local connections = rtween_inst.connections
+
+	for k, connection in array.iter(connections) do
+		connection:Disconnect()
+		array.set(connections, k, nil)
+	end
+
+	rtween_inst.is_paused = false
+
+	play_step(rtween_inst, rtween_inst.is_paused and rtween_inst.current_step or 1)
+end
+
 function rtween.kill(rtween_inst: RTween)
-	for k, tween in ipairs(rtween_inst.tweens) do
+	for k, tween in array.iter(rtween_inst.tweens) do
 		tween:Cancel()
 		tween:Destroy()
-		rtween_inst.tweens[k] = nil
+		array.set(rtween_inst.tweens, k, nil)
 	end
 
-	for i, step in ipairs(rtween_inst.stack) do
-		for j, _ in ipairs(step) do
-			step[j] = nil
+	for i, step in array.iter(rtween_inst.stack) do
+		for j, _ in array.iter(step) do
+			array.set(step, j , nil)
 		end
-		rtween_inst.stack[i] = nil
+		array.set(rtween_inst.stack, i , nil)
 	end
 
-	for _, connection: RBXScriptConnection in ipairs(rtween_inst.connections._data) do
+	for k, connection: RBXScriptConnection in array.iter(rtween_inst.connections) do
 		connection:Disconnect()
+		array.set(rtween_inst.connections, i , nil)
 	end
 
 	rtween_inst.current_step = 1
@@ -184,7 +177,7 @@ function rtween.pause(rtween_inst: RTween)
 	rtween_inst.is_paused = true
 
 	local tweens = rtween_inst.tweens
-	for k, tween in ipairs(tweens) do
+	for k, tween in array.iter(tweens) do
 		tween:Pause()
 	end
 end
@@ -223,7 +216,7 @@ function rtween.tween_instance(
 		array.push_back(tweens_arr, tween_inst)
 	end
 
-	rtween.append_tweens(rtween_inst, tweens_arr._data)
+	rtween.append_tweens(rtween_inst, tweens_arr)
 end
 
 return rtween
