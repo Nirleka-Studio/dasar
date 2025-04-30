@@ -128,7 +128,7 @@ end
 	Returns the value of `index`
 	Shorthand for array._data[index]
 ]=]
-function array.get(arr: Array<any>, index: number): any
+function array.get<T>(arr: Array<T>, index: number): T
 	return arr._data[index]
 end
 
@@ -160,7 +160,7 @@ end
 	@within array
 	Returns an interator function to iterate over the array.
 ]=]
-function array.iter(arr: Array<any>): () -> (number?, any?)
+function array.iter<T>(arr: Array<T>): () -> (number, T)
 	local i = 0
 	return function()
 		i = i + 1

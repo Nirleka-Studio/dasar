@@ -23,7 +23,7 @@ local rtween = {}
 
 export type RTween = {
 	tweens: array.Array<Tween>,
-	stack: array.Array<Tween>,
+	stack: array.Array<array.Array<Tween>>,
 	connections: array.Array<RBXScriptConnection>,
 	easing_style: Enum.EasingStyle,
 	easing_direction: Enum.EasingDirection,
@@ -76,7 +76,7 @@ local function play_step(rtween_inst: RTween, step_index: number)
 	rtween_inst.is_playing = true
 
 	local step = array.get(rtween_inst.stack, step_index)
-	local step_size = #step
+	local step_size = array.size(step)
 	local completed_tweens = 0
 
 	for _, tween in array.iter(step) do
