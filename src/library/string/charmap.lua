@@ -2,6 +2,8 @@
 -- NirlekaDev
 -- April 27, 2025
 
+--!strict
+
 local array = require("../containers/array")
 
 export type CharMap = {

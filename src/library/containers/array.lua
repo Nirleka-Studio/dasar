@@ -2,6 +2,8 @@
 -- NirlekaDev
 -- April 26, 2025
 
+--!strict
+
 local error = error
 local type = type
 local table = table
@@ -158,7 +160,7 @@ end
 	@within array
 	Returns an interator function to iterate over the array.
 ]=]
-function array.iter(arr: Array<any>): () -> (number, any)
+function array.iter(arr: Array<any>): () -> (number?, any?)
 	local i = 0
 	return function()
 		i = i + 1

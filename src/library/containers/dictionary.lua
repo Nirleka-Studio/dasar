@@ -2,6 +2,8 @@
 -- NirlekaDev
 -- April 26, 2025
 
+--!strict
+
 local array = require("./array")
 
 --[=[
