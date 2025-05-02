@@ -16,24 +16,32 @@ local dictionary = {}
 ]=]
 export type Dictionary<K, V> = {
 	_data: { [K]: V },
-	_size: number,
-	_size_updt: boolean,
-	_readonly: boolean
+	_size: number
 }
 
 --[=[
 	@within dictionary
 	Returns a new dictionary object.
 ]=]
-function dictionary.create(from: { [any]: any }?): Dictionary<any, any>
-	local new_dict: Dictionary<any, any> = {
+function dictionary.create<K, V>(from: { [K]: V }?): Dictionary<K, V>
+	local new_dict: Dictionary<K, V> = {
 		_data = from or {},
-		_size = 0,
-		_size_updt = true,
-		_readonly = false
+		_size = if from then dictionary.count(from) else 0
 	}
 
 	return new_dict
+end
+
+--[=[
+	@within dictionary
+	Manually counts all the entries in the table and returns the total count.
+]=]
+function dictionary.count<K, V>(haystack: { [K]: V }): number
+	local size = 0
+	for _ in pairs(haystack) do
+		size += 1
+	end
+	return size
 end
 
 --[=[
@@ -49,7 +57,7 @@ end
 	Returns the first key assosciated with the value.
 	Returns nil if no key is found.
 ]=]
-function dictionary.find_key(dict: Dictionary<any, any>, value: any): any
+function dictionary.find_key<K, V>(dict: Dictionary<K, V>, value: V): K?
 	for k, v in pairs(dict._data) do
 		if v == value then
 			return k
@@ -62,10 +70,11 @@ end
 --[=[
 	@within dictionary
 	Returns the value associated with the key.
-	Returns nil if no value is found.
+	If the value is nil, returns `default`
 ]=]
-function dictionary.get(dict: Dictionary<any, any>, key: any): any
-	return dict._data[key]
+function dictionary.get<K, V>(dict: Dictionary<K, V>, key: K, default: any?): V
+	local value = dict._data[key]
+	return if value then value else default
 end
 
 --[=[
@@ -94,33 +103,20 @@ end
 
 --[=[
 	@within dictionary
+	Returns an iterator function that iterates through the dictionary.
+]=]
+function dictionary.iter<K, V>(dict: Dictionary<K, V>): ({ [K]: V }, K?) -> (K?, V)
+	-- this is a very weird and shit type annotation, ill give you that
+	return pairs(dict._data)
+end
+
+--[=[
+	@within dictionary
 	Returns true if the dictionary contains any keys.
 	Returns false otherwise.
 ]=]
-function dictionary.is_empty(dict: Dictionary<any, any>): boolean
-	return dictionary.size(dict) == 0
-end
-
---[=[
-	@within dictionary
-	Returns true if the dictionary is readonly.
-	Returns false otherwise.
-]=]
-function dictionary.is_read_only(dict: Dictionary<any, any>): boolean
-	return dict._readonly
-end
-
---[=[
-	@within dictionary
-	Makes the dictionary readonly.
-	Making any attempts to modify the dictionary will result in an error.
-	However, any modifications of a table within the dictionary does not count.
-]=]
-function dictionary.make_read_only(dict: Dictionary<any, any>): ()
-	-- idk about this one, should we give an error when we call make_read_only on a readonly dictionary?
-	-- that technically counts as a modification, but the dictionary is already readonly.
-	-- so idfk. Leave it like that.
-	dict._readonly = true
+function dictionary.is_empty<K, V>(dict: Dictionary<K, V>): boolean
+	return dict._size == 0
 end
 
 --[=[
@@ -128,7 +124,7 @@ end
 	Adds entries from `other` to `dict`.
 	By default, duplicate keys are not copied over, unless `overwrite` is `true`.
 ]=]
-function dictionary.merge(dict: Dictionary<any, any>, other: Dictionary<any, any>, overwrite: boolean): ()
+function dictionary.merge<K, V>(dict: Dictionary<K, V>, other: Dictionary<K, V>, overwrite: boolean): ()
 	for k, v in pairs(other._data) do
 		if not dict._data[k] or overwrite then
 			dictionary.set(dict, k, v)
@@ -139,34 +135,25 @@ end
 --[=[
 	@within dictionary
 	Sets the value associated with the key to the given value.
-	Will return an error if the dictionary is readonly.
 ]=]
-function dictionary.set(dict: Dictionary<any, any>, key: any, value: any): ()
-	-- since im not fucking stupid and im not gonna write all of these checks
-	-- on every methods that modifies a dictionary.
-	if dict._readonly then
-		error("Cannot modify a readonly dictionary.")
+function dictionary.set<K, V>(dict: Dictionary<K, V>, key: K, value: V): ()
+	local exists = dict._data[key] ~= nil
+	local is_deletion = value == nil
+
+	if not exists and not is_deletion then
+		dict._size += 1
+	elseif exists and is_deletion then
+		dict._size -= 1
 	end
 
 	dict._data[key] = value
-	dictionary._size_updt = true
 end
 
 --[=[
 	@within dictionary
-	Returns the number of keys in the dictionary.
-	Dictionaries cache their size. If the dictionary is unmodified between calls, the cached size is returned.
+	Returns the number of entries in the dictionary.
 ]=]
-function dictionary.size(dict: Dictionary<any, any>): number
-	if dict._size_updt then
-		local size = 0
-		for _ in pairs(dict._data) do
-			size += 1
-		end
-		dict._size = size
-		dict._size_updt = false
-	end
-
+function dictionary.size<K, V>(dict: Dictionary<K, V>): number
 	return dict._size
 end
 
