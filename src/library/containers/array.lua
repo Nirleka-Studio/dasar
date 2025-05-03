@@ -7,6 +7,7 @@
 local error = error
 local table = table
 local clear = table.clear
+local create = table.create
 local find = table.find
 local remove = table.remove
 local string = string
@@ -29,12 +30,38 @@ export type Array<T> = {
 
 --[=[
 	@within array
-	Returns a new array.
+	Returns an empty array.
 ]=]
-function array.create<T>(from: { T }?): Array<T>
+function array.create<T>(): Array<T>
+	local new_array: Array<T> = {
+		_data = {},
+		_size = 0
+	}
+
+	return new_array
+end
+
+--[=[
+	@within array
+	Returns a new array populated with many instances of the specified value.
+]=]
+function array.filled<T>(count: number, value: T?): Array<T>
 	local new_array: Array<any> = {
-		_data = from or {},
-		_size = from and #from or 0
+		_data = create(count, value),
+		_size = count
+	}
+
+	return new_array
+end
+
+--[=[
+	@within array
+	Reference an existing table to be an array
+]=]
+function array.from<T>(from: { T }): Array<T>
+	local new_array: Array<T> = {
+		_data = from,
+		_size = #from
 	}
 
 	return new_array

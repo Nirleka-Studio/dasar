@@ -52,7 +52,7 @@ local function append_tweens(rtween_inst: RTween, tweens_arr: array.Array<Tween>
 
 	rtween_inst.parallel_enabled = rtween_inst.default_parallel
 
-	if not stack[current_step_index] then
+	if not array.get(stack, current_step_index) then
 		array.push_back(stack, array.create())
 	end
 
@@ -104,9 +104,9 @@ function rtween.create(
 	easing_direction: Enum.EasingDirection
 ): RTween
 	local new_rtween: RTween = {
-		tweens = array.create(),
-		stack = array.create(),
-		connections = array.create(),
+		tweens = array.create() :: array.Array<Tween>, -- these will make the type checker stfu
+		stack = array.create() :: array.Array<array.Array<Tween>>,
+		connections = array.create() :: array.Array<RBXScriptConnection>,
 		easing_style = easing_style or Enum.EasingStyle.Linear,
 		easing_direction = easing_direction or Enum.EasingDirection.InOut,
 		parallel_enabled = false,
@@ -139,7 +139,7 @@ function rtween.play(rtween_inst: RTween)
 		array.set(connections, k, nil)
 	end
 
-	rtween_inst.is_paused = false
+	rtween_inst.is_paused = false -- fym "Type 'false' could not be converted into 'true'" ?????
 
 	play_step(rtween_inst, rtween_inst.is_paused and rtween_inst.current_step or 1)
 end
@@ -203,7 +203,7 @@ function rtween.tween_instance(
 		false,
 		delay or 0
 	)
-	local tweens_arr = array.create()
+	local tweens_arr = array.create() :: array.Array<Tween>
 
 	for prop_name, prop_fnl_val in pairs(properties) do
 		local tween_inst = TweenService:Create(
