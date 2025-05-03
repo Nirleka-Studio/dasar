@@ -5,16 +5,14 @@
 --!strict
 
 local error = error
-local type = type
 local table = table
 local clear = table.clear
 local find = table.find
 local remove = table.remove
-local math = math
-local floor = math.floor
 local string = string
 local format = string.format
-local typeof = typeof
+local math = math
+local floor = math.floor
 
 --[=[
 	@class array
@@ -26,27 +24,17 @@ local array = {}
 ]=]
 export type Array<T> = {
 	_data: { [number]: T },
-	_readonly: boolean
+	_size: number
 }
-
---[=[
-	@within array
-]=]
-type MapperFn = (value: any) -> any
-
---[=[
-	@within array
-]=]
-type PredicateFn = (value: any) -> boolean
 
 --[=[
 	@within array
 	Returns a new array.
 ]=]
-function array.create(from: { [number]: any }?)
+function array.create<T>(from: { T }?): Array<T>
 	local new_array: Array<any> = {
 		_data = from or {},
-		_readonly = false
+		_size = from and #from or 0
 	}
 
 	return new_array
@@ -64,30 +52,11 @@ end
 
 --[=[
 	@within array
-	Returns a new array with the elements of `fruits` on the end of `basket`
-]=]
-function array.concat_array(basket: Array<any>, fruits: Array<any>): Array<any>
-	local new_basket: Array<any> = array.duplicate(basket)
-
-	for _, fruit in ipairs(fruits._data) do
-		array.push_back(new_basket, fruit)
-	end
-
-	return new_basket
-end
-
---[=[
-	@within array
 	Removes all element from the array.
 ]=]
 function array.clear(arr: Array<any>)
-	-- no... ive broken the code... every checks shall be in .set() goddamit!!!
-	if arr._readonly then
-		error("Cannot modify a readonly Array", 4)
-	end
-
-	-- but oh well. we need you anyway.
 	clear(arr._data)
+	arr._size = 0
 end
 
 --[=[
@@ -95,16 +64,13 @@ end
 	Removes the first occurence of index assosicated with `value`
 ]=]
 function array.erase(arr: Array<any>, value: any)
-	if arr._readonly then
-		error("Cannot modify a readonly Array", 4)
-	end
-
 	local index = array.find(arr, value)
 	if not index then
 		return
 	end
 
 	remove(arr._data, index)
+	arr._size -= 1
 end
 
 --[=[
@@ -150,53 +116,10 @@ end
 
 --[=[
 	@within array
-	Returns true if the array's `_readonly` is true.
+	Returns the function ipairs() on arr._data returns.
 ]=]
-function array.is_readonly(arr: Array<any>): boolean
-	return arr._readonly
-end
-
---[=[
-	@within array
-	Returns an interator function to iterate over the array.
-]=]
-function array.iter<T>(arr: Array<T>): () -> (number, T)
-	local i = 0
-	return function()
-		i = i + 1
-		if i <= #arr._data then
-			return i, arr._data[i]
-		end
-
-		return
-	end
-end
-
---[=[
-	@within array
-	Makes the array read-only.
-]=]
-function array.make_readonly(arr: Array<any>)
-	arr._readonly = true
-end
-
---[=[
-	@within array
-	Iterates through the array and assigns each entry to
-	what is returned by the `fn` function.
-]=]
-function array.map(arr: Array<any>, fn: MapperFn)
-	if arr._readonly then
-		error("Cannot modify a readonly Array", 4)
-	end
-
-	for k, v in ipairs(arr._data) do
-		-- if some dumbass returns nil here, there will be a gap in the array
-		-- which can fuck things up. As they say, never remove an entry while iterating!!
-		-- now, i highly doubt my UNPAID CONTRACTORS WITH _STANDARDS_
-		-- will do this, but some retards do.
-		arr._data[k] = fn(v)
-	end
+function array.iter<T>(arr: Array<T>): (({T}, number) -> (number?, T), {T}, number)
+	return ipairs(arr._data)
 end
 
 --[=[
@@ -204,11 +127,8 @@ end
 	Inserts a new index with `value` at the end of the array.
 ]=]
 function array.push_back(arr: Array<any>, value: any)
-	if arr._readonly then
-		error("Cannot modify a readonly Array", 4)
-	end
-
 	arr._data[ #arr._data + 1 ] = value
+	arr._size += 1
 end
 
 --[=[
@@ -217,10 +137,9 @@ end
 	Maintains the order of the array.
 ]=]
 function array.remove_at(arr: Array<any>, index: number)
-	if arr._readonly then
-		error("Cannot modify a readonly Array", 4)
+	if index < arr._size then
+		arr._size -= 1
 	end
-
 	return remove(arr._data, index)
 end
 
@@ -229,10 +148,6 @@ end
 	Sets the value of `index` to `value`
 ]=]
 function array.set(arr: Array<any>, index: number, value: any)
-	if arr._readonly then
-		error("Cannot modify a readonly Array", 4)
-	end
-
 	if type(index) ~= "number" then
 		error(format("Cannot index Array with type %s", typeof(index)), 4)
 	end
@@ -243,12 +158,16 @@ function array.set(arr: Array<any>, index: number, value: any)
 		error("Array indices must be integers", 4)
 	end
 
-	if index > (size + 1) then
+	if index > size or index < 0 then
 		error("Index is out of bounds", 4)
 	end
 
 	if value == nil then
 		remove(arr._data, index)
+		-- no need to know if the index exists or not
+		-- since this function will throw an error if the index
+		-- is out of bounds anyway.
+		arr._size -= 1
 		return
 	end
 
@@ -261,7 +180,7 @@ end
 	Sizes of arrays and cached in the `_size` field.
 ]=]
 function array.size(arr: Array<any>): number
-	return #arr._data
+	return arr._size
 end
 
 return array
