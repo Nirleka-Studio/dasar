@@ -98,8 +98,11 @@ function ustring.explode(str: string): Array<string>
 
 	-- string.sub() and others operates on bytes. So multibyte characters like `月`
 	-- will result in an unknown character. `�`
+
+	local i = 0
 	for p, c in utf8.codes(str) do
-		array.set(chars, p, utf8.char(c))
+		i += 1
+		array.set(chars, i, utf8.char(c))
 	end
 
 	return chars
