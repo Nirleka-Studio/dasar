@@ -22,6 +22,7 @@ local array = {}
 
 --[=[
 	@within array
+	An array is a 1-based indexed data structure.
 ]=]
 export type Array<T> = {
 	_data: { [number]: T },
@@ -32,8 +33,8 @@ export type Array<T> = {
 	@within array
 	Returns an empty array.
 ]=]
-function array.create<T>(): Array<T>
-	local new_array: Array<T> = {
+function array.create(): Array<any>
+	local new_array: Array<any> = {
 		_data = {},
 		_size = 0
 	}
@@ -45,8 +46,8 @@ end
 	@within array
 	Returns a new array populated with many instances of the specified value.
 ]=]
-function array.filled<T>(count: number, value: T?): Array<T>
-	local new_array: Array<any> = {
+function array.filled<T>(count: number, value: T): Array<T>
+	local new_array: Array<T> = {
 		_data = create(count, value),
 		_size = count
 	}
@@ -110,6 +111,21 @@ end
 
 --[=[
 	@within array
+	Returns a new array filled with the entries that the `predicate` function returned true.
+]=]
+function array.filter<T>(arr: Array<T>, predicate: (value: T) -> boolean): Array<T>
+	local new_arr: Array<T> = array.create()
+	for i, v in ipairs(arr._data) do
+		if not predicate(v) then
+			continue
+		end
+		array.push_back(new_arr, v)
+	end
+	return new_arr
+end
+
+--[=[
+	@within array
 	Returns the index of the first occurence of `value`
 ]=]
 function array.find(arr: Array<any>, value: any, from: number?): number?
@@ -147,6 +163,21 @@ end
 ]=]
 function array.iter<T>(arr: Array<T>): (({T}, number) -> (number?, T), {T}, number)
 	return ipairs(arr._data)
+end
+
+--[=[
+	@within array
+	Returns a new array with each element set to the value returned by the `mapper` function.
+]=]
+function array.map<T, U>(arr: Array<U>, mapper: (value: U) -> T): Array<T>
+	-- idk why, but filling up an already filled table is faster.
+	local new_arr: Array<T> = array.filled(arr._size, true)
+	for i, v in ipairs(arr._data) do
+		array.set(new_arr, i, mapper(v))
+	end
+	-- omg, no type errors? :o shocking, i know, im a genius.
+	-- now ignore the rest of my code.
+	return new_arr
 end
 
 --[=[
