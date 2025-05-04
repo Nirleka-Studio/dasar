@@ -59,7 +59,7 @@ end
 ]=]
 function dictionary.find_key<K, V>(dict: Dictionary<K, V>, value: V): K?
 	for k, v in pairs(dict._data) do
-		if v == value then
+		if v :: any == value :: any then -- some shit to make the type checker stfu
 			return k
 		end
 	end
@@ -105,7 +105,7 @@ end
 	@within dictionary
 	Returns an iterator function that iterates through the dictionary.
 ]=]
-function dictionary.iter<K, V>(dict: Dictionary<K, V>): ({ [K]: V }, K?) -> (K?, V)
+function dictionary.iter<K, V>(dict: Dictionary<K, V>): (({ [K]: V }, K?) -> (K?, V), { [K]: V }, nil)
 	-- this is a very weird and shit type annotation, ill give you that
 	return pairs(dict._data)
 end
@@ -126,7 +126,7 @@ end
 ]=]
 function dictionary.merge<K, V>(dict: Dictionary<K, V>, other: Dictionary<K, V>, overwrite: boolean): ()
 	for k, v in pairs(other._data) do
-		if not dict._data[k] or overwrite then
+		if not dict._data[k] :: boolean or overwrite then
 			dictionary.set(dict, k, v)
 		end
 	end
@@ -137,12 +137,19 @@ end
 	Sets the value associated with the key to the given value.
 ]=]
 function dictionary.set<K, V>(dict: Dictionary<K, V>, key: K, value: V): ()
-	local exists = dict._data[key] ~= nil
+	--[[
+		"TypeError: Type function instance union<V, nil> depends on generic function parameters
+			but does not appear in the function signature; this construct cannot be type-checked at this time"
+		BRO STFU
+	]]
+	local exists = (dict._data[key] ~= nil)
 	local is_deletion = value == nil
 
-	if not exists and not is_deletion then
+	-- yes. i need to EXPLICITLY ASSERT THAT THESE, ARE, INFACT, BOOLEANS.
+	-- AND NO, EVEN IF I DID ASSERT THE TYPE ON THE 2 VARIABLES BEING COMPARED, IT WONT STFU
+	if not exists :: boolean and not is_deletion :: boolean then
 		dict._size += 1
-	elseif exists and is_deletion then
+	elseif exists :: boolean and is_deletion :: boolean then
 		dict._size -= 1
 	end
 
