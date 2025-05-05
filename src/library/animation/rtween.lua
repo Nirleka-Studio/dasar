@@ -128,7 +128,13 @@ function rtween.play(rtween_inst: RTween)
 	-- In order to advance to the next step, all tweens in the current step
 	-- has to be completed.
 
-	if rtween_inst.is_playing and not rtween_inst.is_paused then
+	-- this is meant to fix the "cannot convert true to false" bullshit.
+	-- yes. this is apprently a bug:
+	-- https://devforum.roblox.com/t/type-true-could-not-be-converted-into-false/3553568/3?u=nirlekaplay
+	-- how retarded.
+	local is_playing: boolean = rtween_inst.is_playing
+
+	if is_playing and not rtween_inst.is_paused then
 		return
 	end
 
@@ -139,7 +145,7 @@ function rtween.play(rtween_inst: RTween)
 		array.set(connections, k, nil)
 	end
 
-	rtween_inst.is_paused = false -- fym "Type 'false' could not be converted into 'true'" ?????
+	rtween_inst.is_paused = false -- YEAH, TAKE THAT
 
 	play_step(rtween_inst, rtween_inst.is_paused and rtween_inst.current_step or 1)
 end
