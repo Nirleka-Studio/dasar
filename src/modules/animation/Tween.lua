@@ -11,10 +11,10 @@
 ]=]
 
 local RunService = game:GetService("RunService")
-local Dict = require(game.ReplicatedStorage.src.core.variant.Dictionary)
+local Dict = require("../../core/variant/Dictionary")
 local Equations = require("./easing_equations")
-local assert_macros = require(game.ReplicatedStorage.src.core.error.assert_macros)
-local MathLib = require(game.ReplicatedStorage.src.core.math.math_funcs)
+local assert_macros = require("../../core/error/assert_macros")
+local MathLib = require("../../core/math/math_funcs")
 local Maid = require("../thirdparty/Maid")
 
 local math = math -- for performance purposes, avoids repeated _G access.

@@ -40,7 +40,7 @@ end
 	Returns an array of CameraSockets from the array of parts.
 ]=]
 function CameraSocket.fromArray(array: { [number] : BasePart })
-	if not type(array) == "table" or #array == 0 then
+	if type(array) ~= "table" or #array == 0 then
 		return nil
 	end
 
@@ -52,7 +52,7 @@ function CameraSocket.fromArray(array: { [number] : BasePart })
 			continue
 		end
 
-		sockets[ sockets + 1 ] = new_socket
+		sockets[ #sockets + 1 ] = new_socket
 	end
 
 	return sockets
