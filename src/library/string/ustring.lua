@@ -140,13 +140,15 @@ end
 	A rather internal function used to change the case of all the letters in a
 	UString.
 ]=]
-function ustring.change_case(ustr: UString, method: "to_lower" | "to_upper"): UString
+function ustring.change_case(ustr: UString, upper: boolean): UString
 	local new_arr = array.filled(ustr.length, true) :: Array<string>
+
+	-- yes. this for making the type checker stfu.
+	local func = if upper then ucaps.to_upper else ucaps.to_lower
 
 	for index, char in array.iter(ustr._array) do
 		local cp = ustring.get_codepoint(char)
-		-- "TypeError: Cannot add indexer to table 'ucaps'" that means jackshit to me.
-		local upper_cp = ucaps[method](cp)
+		local upper_cp = func(cp)
 		local final_char = utf8.char(upper_cp)
 
 		array.set(new_arr, index, final_char)
@@ -173,7 +175,7 @@ end
 	```
 ]=]
 function ustring.lower(ustr: UString): UString
-	return ustring.change_case(ustr, "to_lower")
+	return ustring.change_case(ustr, false)
 end
 
 --[=[
@@ -188,7 +190,7 @@ end
 	```
 ]=]
 function ustring.upper(ustr: UString): UString
-	return ustring.change_case(ustr, "to_upper")
+	return ustring.change_case(ustr, true)
 end
 
 --[=[
