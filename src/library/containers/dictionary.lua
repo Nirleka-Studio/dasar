@@ -142,8 +142,8 @@ function dictionary.set<K, V>(dict: Dictionary<K, V>, key: K, value: V): ()
 			but does not appear in the function signature; this construct cannot be type-checked at this time"
 		BRO STFU
 	]]
-	local exists = (dict._data[key] ~= nil)
-	local is_deletion = value == nil
+	local exists = (dict._data[key] :: any ~= nil)
+	local is_deletion= value :: any == nil
 
 	-- yes. i need to EXPLICITLY ASSERT THAT THESE, ARE, INFACT, BOOLEANS.
 	-- AND NO, EVEN IF I DID ASSERT THE TYPE ON THE 2 VARIABLES BEING COMPARED, IT WONT STFU
