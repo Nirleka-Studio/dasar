@@ -241,4 +241,22 @@ function array.size(arr: Array<any>): number
 	return arr._size
 end
 
+--[=[
+	@within array
+	Returns a new array containing elements from `start` to `end` (inclusive).
+]=]
+function array.slice<T>(arr: Array<T>, start: number, end_: number): Array<T>
+	local newArr = array.create()
+	local len = arr._size
+
+	start = math.max(1, math.min(start, len))
+	end_ = math.max(1, math.min(end_, len))
+
+	for i = start, end_ do
+		array.push_back(newArr, arr._data[i])
+	end
+
+	return newArr
+end
+
 return array
