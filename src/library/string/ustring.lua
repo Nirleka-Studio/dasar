@@ -99,7 +99,7 @@ function ustring.byte_to_char_index(str: string, byte_index: number): number?
 	return nil
 end
 
-function ustring.char_to_byte_index(str, char_index)
+function ustring.char_to_byte_index(str: string, char_index: number)
 	if not char_index or char_index < 1 then return 1 end
 	return utf8.offset(str, char_index) or #str + 1
 end
@@ -223,6 +223,32 @@ end
 ]=]
 function ustring.upper(ustr: UString): UString
 	return ustring.change_case(ustr, true)
+end
+
+--[=[
+	@within ustring
+	A wrapper around the string.find() function, and works exactly like it.
+	Except that the first 2 arguements, which are the start and end index,
+	are in character index, not byte index.
+]=]
+function ustring.sfind(ustr: UString, pattern: string, init: number?, plain: boolean?): (number?, number?, ...string)
+	local str = ustring.tostring(ustr)
+	local results = { string.find(str, pattern, init, plain) }
+
+	local start_index_byte: number? = results[1]
+	local end_index_byte: number? = results[2]
+
+	if start_index_byte and end_index_byte then
+		local start_index_char = ustring.byte_to_char_index(str, start_index_byte)
+		local end_index_char = ustring.byte_to_char_index(str, end_index_byte)
+
+		-- this only exists to make the typechecker stfu
+		local t_results = results :: { string }
+
+		return start_index_char, end_index_char, table.unpack(t_results, 3)
+	end
+
+	return nil, nil
 end
 
 --[=[

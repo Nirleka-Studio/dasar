@@ -12,36 +12,27 @@ local ustring = require("./ustring")
 
 	URich provides basic implementation of Rich Text Format style tags in strings.
 	Currently used for the foundation of the dialogue system.
-	Helpful site: https://regex101.com
 ]=]
 local urich = {}
 
 type Array<T> = array.Array<T>
 type Segment = { tag: string?, content: ustring.UString }
-type Command = { tag: string, attribute: any }
 
-function urich.parse(text)
+function urich.parse(text: string)
 	local result = array.create()
 	local u_text = ustring.create(text)
 
-	-- FUTURE: Remove all of these shit altogether and use UString to handle all the bullshit.
+	local i = 1
+	while i <= u_text.length do
 
-	local i = 1  -- character index
-	while i <= u_text.length do -- I WAS DOING THE BYTE SIZE AND NOT THE LENGTH PROPERTY?!?!
-		-- AND GUESS WHAT?! ITS STILL DOESNT WORK
+		-- this could've been cleaner. But of course, Lua doesn't use the full regex.
+		-- it uses simplified, or, ahem, bastardized version of it. Forcing me to
+		-- write this terribleness.
+		local s, e, tag, tag_content, close_tag = ustring.sfind(u_text, "<([^>]+)>([^<]*)</([^>]+)>", i)
 
-		-- the fucking byte and actual unicode index bullshit again.
-		local byte_i = ustring.char_to_byte_index(text, i) -- OH SO IT WAS YOU
-		local s, e, tag, tag_content, close_tag = string.find(text, "<([^>]+)>([^<]*)</([^>]+)>", byte_i)
-
-		-- istg these red underlines makes me want to commit domestic terrorism.
-		if s and tag == close_tag then
-			-- bother even try?
-			local char_s = ustring.byte_to_char_index(text, s)
-			local char_e = ustring.byte_to_char_index(text, e)
-
-			if char_s > i then
-				local plain_text = ustring.sub(u_text, i, char_s - 1)
+		if (s and e ) and tag == close_tag then
+			if s > i then
+				local plain_text = ustring.sub(u_text, i, s - 1)
 				array.push_back(result, { content = plain_text })
 			end
 
@@ -50,16 +41,13 @@ function urich.parse(text)
 				content = ustring.create(tag_content)
 			})
 
-			i = char_e + 1
+			i = e + 1
 		else
 			local plain_text = ustring.sub(u_text, i)
 			array.push_back(result, { content = plain_text })
 			break
 		end
 	end
-
-	-- oh shit it works now.
-	-- fuck it. commit.
 
 	return result
 end
@@ -72,11 +60,19 @@ function urich.step(parsed: Array<Segment>, cps: number, stepper: (chars: string
 		if segment.tag == "skip" then
 			stepper(segment.content._string)
 			continue
+		elseif segment.tag == "wait" then
+			local wait_time = segment.content._string
+			if wait_time == "" then
+				wait_time = 0
+			end
+
+			task.wait(tonumber(wait_time))
+			continue
 		end
 
 		for i, char in array.iter(segment.content._array) do
 			while tick() - last_time < char_delay do
-				task.wait(0) -- delay so the stack wont go sodding
+				task.wait() -- delay so the stack wont go sodding
 			end
 
 			stepper(char)
