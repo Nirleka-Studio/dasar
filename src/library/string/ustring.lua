@@ -230,10 +230,17 @@ end
 	A wrapper around the string.find() function, and works exactly like it.
 	Except that the first 2 arguements, which are the start and end index,
 	are in character index, not byte index.
+	Make sure `init` is also the actual Unicode index.
 ]=]
 function ustring.sfind(ustr: UString, pattern: string, init: number?, plain: boolean?): (number?, number?, ...string)
 	local str = ustring.tostring(ustr)
-	local results = { string.find(str, pattern, init, plain) }
+	local init_byte: number
+	if init then
+		init_byte = ustring.char_to_byte_index(ustr._string, init)
+	else
+		init_byte = 1
+	end
+	local results = { string.find(str, pattern, init_byte, plain) }
 
 	local start_index_byte: number? = results[1]
 	local end_index_byte: number? = results[2]
@@ -242,10 +249,7 @@ function ustring.sfind(ustr: UString, pattern: string, init: number?, plain: boo
 		local start_index_char = ustring.byte_to_char_index(str, start_index_byte)
 		local end_index_char = ustring.byte_to_char_index(str, end_index_byte)
 
-		-- this only exists to make the typechecker stfu
-		local t_results = results :: { string }
-
-		return start_index_char, end_index_char, table.unpack(t_results, 3)
+		return start_index_char, end_index_char, table.unpack(results :: { string }, 3)
 	end
 
 	return nil, nil
@@ -276,23 +280,23 @@ end
 	print(ustring.tostring(sub)) -- "綺麗で"
 	```
 ]=]
-function ustring.sub(str: UString, i: number, j: number?): UString
+function ustring.sub(ustr: UString, i: number, j: number?): UString
 	if i < 0 then
-		i = str.length + i + 1
+		i = ustr.length + i + 1
 	end
 	if j and j < 0 then
-		j = str.length + j + 1
+		j = ustr.length + j + 1
 	end
 
-	i = math.max(1, math.min(i, str.length))
-	j = j or str.length
-	j = math.max(1, math.min(j, str.length))
+	i = math.max(1, math.min(i, ustr.length))
+	j = j or ustr.length
+	j = math.max(1, math.min(j, ustr.length))
 
 	if i > j then
 		i, j = j, i
 	end
 
-	local sub_arr = array.slice(str._array, i, j)
+	local sub_arr = array.slice(ustr._array, i, j)
 	local sub_str = table.concat(sub_arr._data)
 
 	return ustring.create(sub_str)

@@ -22,26 +22,50 @@ function urich.parse(text: string)
 	local result = array.create()
 	local u_text = ustring.create(text)
 
+	-- this is more complicated than it needs to be.
+
+	-- all i can explain the steps is that
+	-- 1. Look for the first tag. (<...>) 2. if it does, check if its an attributed tag <...=...>
+	-- 3. if its not, check if its an enclosed that (<...>...</...>)
+
+	-- you'll probably wondering what this is for. well, guess what? its not for markup.
+	-- its the backbone of the dialogue system.
+	-- the previous system uses symbols and internal delays for specific characters (|, _) which is
+	-- a bit too hardcoded and barely extendable.
+	-- so the more logical approach is to just parses the string to a set of specific instrunctions.
+	-- this is an example: in the original system, its like this "Plain text. _INSTANT APPEAR_| wow.|"
+	-- now, this acts as the parser instead of the hard coded engine. So that turns to:
+	-- "Plain text.<wait=1> <skip>INSTANT APPEAR</skip><wait=1> wow.<wait=1>"
+
+	-- what about the ustrings? well, those are wrappers around the normal strings except its unicode array.
+	-- does it overcomplicate it? No. Heck, all of these ustring functions are basically the string library
+	-- functions. And if you did replace them, it'll still work just fine. (if the input is ASCII)
 	local i = 1
 	while i <= u_text.length do
+		local s, e, tag = ustring.sfind(u_text, "<([^>]+)>", i)
 
-		-- this could've been cleaner. But of course, Lua doesn't use the full regex.
-		-- it uses simplified, or, ahem, bastardized version of it. Forcing me to
-		-- write this terribleness.
-		local s, e, tag, tag_content, close_tag = ustring.sfind(u_text, "<([^>]+)>([^<]*)</([^>]+)>", i)
+		if (s and e) then
+			local _, _, att_tag, attribute = string.find(tag, "^(%w+)%s*=%s*(%w+)")
+			if (att_tag and attribute) then
+				array.push_back(result, { tag = att_tag, content = ustring.create(attribute) })
+				i = e + 1
+				continue
+			end
 
-		if (s and e ) and tag == close_tag then
+			-- wtf does this do here? idk.
 			if s > i then
 				local plain_text = ustring.sub(u_text, i, s - 1)
 				array.push_back(result, { content = plain_text })
 			end
 
-			array.push_back(result, {
-				tag = tag,
-				content = ustring.create(tag_content)
-			})
-
-			i = e + 1
+			local s_2, e_2 = ustring.sfind(u_text, "<\/([^>]+)>", e + 1)
+			if (s_2 and e_2) then
+				local plain_text = ustring.sub(u_text, e + 1, s_2 - 1)
+				array.push_back(result, { tag = tag, content = plain_text })
+				i = e_2 + 1
+			else
+				i = e + 1
+			end
 		else
 			local plain_text = ustring.sub(u_text, i)
 			array.push_back(result, { content = plain_text })
