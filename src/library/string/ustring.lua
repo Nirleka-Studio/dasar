@@ -6,6 +6,7 @@
 local array = require("../containers/array")
 local ucaps = require("./ucaps")
 
+local string = string
 local table = table
 local utf8 = utf8
 
@@ -70,6 +71,37 @@ function ustring.at(str: UString, index: number): string?
 	end
 
 	return str._array._data[index]
+end
+
+--[=[
+	@within ustring
+	Useful when you're working with the native Lua string library,
+	which can fuck up the index since it operates in bytes.
+
+	```lua
+	local s = "月が綺麗ですね。"
+	local target = "に"
+
+	-- find the byte index of 'に' in the string
+	local byte_start, byte_end = string.find(text, target) -- 7, 9
+
+	local char_index = byte_to_char_index(text, byteStart) -- 3
+	```
+]=]
+function ustring.byte_to_char_index(str: string, byte_index: number): number?
+	local char_index = 0
+	for p, c in utf8.codes(str) do
+		char_index = char_index + 1
+		if p >= byte_index then
+			return char_index
+		end
+	end
+	return nil
+end
+
+function ustring.char_to_byte_index(str: string, char_index: number)
+	if not char_index or char_index < 1 then return 1 end
+	return utf8.offset(str, char_index) or #str + 1
 end
 
 --[=[
@@ -195,6 +227,36 @@ end
 
 --[=[
 	@within ustring
+	A wrapper around the string.find() function, and works exactly like it.
+	Except that the first 2 arguements, which are the start and end index,
+	are in character index, not byte index.
+	Make sure `init` is also the actual Unicode index.
+]=]
+function ustring.sfind(ustr: UString, pattern: string, init: number?, plain: boolean?): (number?, number?, ...string)
+	local str = ustring.tostring(ustr)
+	local init_byte: number
+	if init then
+		init_byte = ustring.char_to_byte_index(ustr._string, init)
+	else
+		init_byte = 1
+	end
+	local results = { string.find(str, pattern, init_byte, plain) }
+
+	local start_index_byte: number? = results[1]
+	local end_index_byte: number? = results[2]
+
+	if start_index_byte and end_index_byte then
+		local start_index_char = ustring.byte_to_char_index(str, start_index_byte)
+		local end_index_char = ustring.byte_to_char_index(str, end_index_byte)
+
+		return start_index_char, end_index_char, table.unpack(results :: { string }, 3)
+	end
+
+	return nil, nil
+end
+
+--[=[
+	@within ustring
 	Not to be confused with `ustring.length()`,
 	This returns the byte size of the UString's string.
 
@@ -206,6 +268,38 @@ end
 ]=]
 function ustring.size(ustr: UString): number
 	return ustr.size
+end
+
+--[=[
+	@within ustring
+	Returns a substring of the UString, similar to string.sub() but Unicode-aware.
+
+	```lua
+	local s = ustring.create("月が綺麗ですね。")
+	local sub = ustring.sub(s, 3, 5)
+	print(ustring.tostring(sub)) -- "綺麗で"
+	```
+]=]
+function ustring.sub(ustr: UString, i: number, j: number?): UString
+	if i < 0 then
+		i = ustr.length + i + 1
+	end
+	if j and j < 0 then
+		j = ustr.length + j + 1
+	end
+
+	i = math.max(1, math.min(i, ustr.length))
+	j = j or ustr.length
+	j = math.max(1, math.min(j, ustr.length))
+
+	if i > j then
+		i, j = j, i
+	end
+
+	local sub_arr = array.slice(ustr._array, i, j)
+	local sub_str = table.concat(sub_arr._data)
+
+	return ustring.create(sub_str)
 end
 
 --[=[
